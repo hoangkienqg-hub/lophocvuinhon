@@ -1,0 +1,24 @@
+# Dependencies
+node_modules
+.pnpm-store
+
+# Local Environment Variables
+.env
+.env.local
+.env.production
+
+# Build Outputs
+dist
+dist-ssr
+*.local
+
+# Editor & System Files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
