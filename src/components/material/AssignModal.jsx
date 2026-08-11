@@ -52,12 +52,18 @@ const AssignModal = ({ isOpen, onClose, material, preselectedClassId, onAssigned
     setError('')
 
     try {
+      let isoDueDate = null
+      if (dueDate) {
+        // Append end-of-day time 23:59:59 if only date is specified
+        isoDueDate = new Date(`${dueDate}T23:59:59`).toISOString()
+      }
+
       const { data, error: assignError } = await supabase
         .from('assignments')
         .insert({
           material_id: material.id,
           class_id: selectedClassId,
-          due_date: dueDate ? new Date(dueDate).toISOString() : null,
+          due_date: isoDueDate,
           instructions: instructions.trim(),
         })
         .select()
@@ -119,11 +125,11 @@ const AssignModal = ({ isOpen, onClose, material, preselectedClassId, onAssigned
 
         <div>
           <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-1">
-            Hạn Chót Hoàn Thành (Deadline)
+            Hạn Chót Hoàn Thành (Chọn Ngày)
           </label>
           <div className="relative">
             <input
-              type="datetime-local"
+              type="date"
               value={dueDate}
               onChange={(e) => setDueDate(e.target.value)}
               className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 focus:ring-2 focus:ring-brand-500 outline-none transition text-sm"
