@@ -204,7 +204,23 @@ const UploadMaterialModal = ({ isOpen, onClose, onUploaded }) => {
             </button>
           </div>
         </div>
-
+        {/* Category Selector */}
+        <div>
+          <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-1">
+            Mục Đích / Phân Loại Bài Tập *
+          </label>
+          <select
+            value={category}
+            onChange={(e) => setCategory(e.target.value)}
+            className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 focus:ring-2 focus:ring-brand-500 outline-none transition font-medium"
+          >
+            <option value="weekly">📅 Bài Tập Tuần</option>
+            <option value="monthly">🗓️ Bài Tập Tháng</option>
+            <option value="test">📝 Bài Kiểm Tra / Đề Thi</option>
+            <option value="practice">📖 Bài Ôn Tập & Bài Giảng</option>
+            <option value="game">🎮 Trò Chơi Giáo Dục</option>
+          </select>
+        </div>
         {/* Category Selector */}
         <div>
           <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-1">
