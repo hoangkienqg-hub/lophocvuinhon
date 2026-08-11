@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import Modal from '../common/Modal'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../context/AuthContext'
-import { Upload, Link as LinkIcon, Gamepad2, FileText, Video, Loader2 } from 'lucide-react'
+import { Upload, Link as LinkIcon, Gamepad2, FileText, Video, Loader2, Calendar, Award, BookOpen } from 'lucide-react'
 
 const DEFAULT_SUBJECTS = [
   'Toán Học',
@@ -22,7 +22,8 @@ const UploadMaterialModal = ({ isOpen, onClose, onUploaded }) => {
   const { user } = useAuth()
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
-  const [type, setType] = useState('document')
+  const [type, setType] = useState('document') // document, video, game_iframe, game_html5
+  const [category, setCategory] = useState('weekly') // weekly, monthly, test, practice, game
   const [fileUrl, setFileUrl] = useState('')
   const [selectedFile, setSelectedFile] = useState(null)
   const [subject, setSubject] = useState('Toán Học')
@@ -109,6 +110,7 @@ const UploadMaterialModal = ({ isOpen, onClose, onUploaded }) => {
           title: title.trim(),
           description: description.trim(),
           type,
+          category,
           file_url: finalUrl,
           author_id: user.id,
           subject,
@@ -203,6 +205,24 @@ const UploadMaterialModal = ({ isOpen, onClose, onUploaded }) => {
           </div>
         </div>
 
+        {/* Category Selector */}
+        <div>
+          <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-1">
+            Mục Đích / Phân Loại Bài Tập *
+          </label>
+          <select
+            value={category}
+            onChange={(e) => setCategory(e.target.value)}
+            className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 focus:ring-2 focus:ring-brand-500 outline-none transition font-medium"
+          >
+            <option value="weekly">📅 Bài Tập Tuần</option>
+            <option value="monthly">🗓️ Bài Tập Tháng</option>
+            <option value="test">📝 Bài Kiểm Tra / Đề Thi</option>
+            <option value="practice">📖 Bài Ôn Tập & Bài Giảng</option>
+            <option value="game">🎮 Trò Chơi Giáo Dục</option>
+          </select>
+        </div>
+
         <div>
           <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-1">
             Tiêu Đề Bài Học / Game *
@@ -210,7 +230,7 @@ const UploadMaterialModal = ({ isOpen, onClose, onUploaded }) => {
           <input
             type="text"
             required
-            placeholder="VD: Trò chơi Đuổi Hình Bắt Chữ - Toán 5"
+            placeholder="VD: Bài tập Tuần 1 - Phép cộng trừ trong phạm vi 100"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 focus:ring-2 focus:ring-brand-500 outline-none transition"
