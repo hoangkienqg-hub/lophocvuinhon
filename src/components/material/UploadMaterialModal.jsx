@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import Modal from '../common/Modal'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../context/AuthContext'
-import { Upload, Link as LinkIcon, Gamepad2, FileText, Video, Loader2, Calendar, Award, BookOpen } from 'lucide-react'
+import { Upload, Link as LinkIcon, Gamepad2, FileText, Video, Loader2, Calendar, Award, BookOpen, X } from 'lucide-react'
 
 const DEFAULT_SUBJECTS = [
   'Toán Học',
@@ -249,9 +249,19 @@ const UploadMaterialModal = ({ isOpen, onClose, onUploaded }) => {
                 placeholder="https://wordwall.net/embed/..."
                 value={fileUrl}
                 onChange={(e) => setFileUrl(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 focus:ring-2 focus:ring-brand-500 outline-none transition"
+                className="w-full pl-10 pr-10 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 focus:ring-2 focus:ring-brand-500 outline-none transition"
               />
               <LinkIcon className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
+              {fileUrl && (
+                <button
+                  type="button"
+                  onClick={() => setFileUrl('')}
+                  className="absolute right-3 top-3 text-slate-400 hover:text-red-600 transition"
+                  title="Xóa URL"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              )}
             </div>
           </div>
         ) : (
@@ -259,19 +269,53 @@ const UploadMaterialModal = ({ isOpen, onClose, onUploaded }) => {
             <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200">
               Chọn File Từ Máy Tính Hoặc Nhập Link Trực Tiếp
             </label>
-            <input
-              type="file"
-              onChange={handleFileChange}
-              className="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-brand-50 file:text-brand-700 hover:file:bg-brand-100 dark:file:bg-slate-700 dark:file:text-white"
-            />
-            <div className="text-center text-xs text-slate-400 font-semibold uppercase">Hoặc</div>
-            <input
-              type="url"
-              placeholder="https://example.com/file.pdf"
-              value={fileUrl}
-              onChange={(e) => setFileUrl(e.target.value)}
-              className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 focus:ring-2 focus:ring-brand-500 outline-none transition text-sm"
-            />
+            
+            <div className="flex flex-wrap items-center gap-3">
+              <label className="cursor-pointer inline-flex items-center gap-2 px-4 py-2 bg-brand-50 hover:bg-brand-100 dark:bg-brand-950/60 dark:hover:bg-brand-900 text-brand-700 dark:text-brand-300 font-semibold text-sm rounded-xl border border-brand-200 dark:border-brand-800 transition shadow-xs">
+                <Upload className="w-4 h-4" />
+                <span>Chọn tệp từ máy</span>
+                <input type="file" onChange={handleFileChange} className="hidden" />
+              </label>
+              
+              {selectedFile ? (
+                <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-100 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
+                  <span className="text-xs font-semibold text-slate-700 dark:text-slate-200 truncate max-w-xs">
+                    📄 {selectedFile.name}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedFile(null)}
+                    className="p-1 text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40 rounded-full transition"
+                    title="Xóa / Hủy chọn tệp này"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              ) : (
+                <span className="text-xs text-slate-400">Chưa chọn tệp nào</span>
+              )}
+            </div>
+
+            <div className="text-center text-xs text-slate-400 font-semibold uppercase">Hoặc dán đường dẫn</div>
+            <div className="relative">
+              <input
+                type="url"
+                placeholder="https://example.com/file.pdf"
+                value={fileUrl}
+                onChange={(e) => setFileUrl(e.target.value)}
+                className="w-full pl-4 pr-10 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 focus:ring-2 focus:ring-brand-500 outline-none transition text-sm"
+              />
+              {fileUrl && (
+                <button
+                  type="button"
+                  onClick={() => setFileUrl('')}
+                  className="absolute right-3 top-3 text-slate-400 hover:text-red-600 transition"
+                  title="Xóa link"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              )}
+            </div>
           </div>
         )}
 
