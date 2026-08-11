@@ -20,10 +20,24 @@ import {
   Sparkles,
 } from 'lucide-react'
 
+const DEFAULT_SUBJECTS = [
+  'Toán Học',
+  'Tiếng Việt',
+  'Tiếng Anh',
+  'Tự Nhiên & Xã Hội',
+  'Khoa Học',
+  'Lịch Sử & Địa Lý',
+  'Tin Học & Công Nghệ',
+  'Đạo Đức',
+  'Mỹ Thuật & Âm Nhạc',
+  'Hoạt Động Trải Nghiệm',
+]
+
 const MaterialsPage = () => {
   const { user, role, isTeacher, isAdmin } = useAuth()
 
   const [materials, setMaterials] = useState([])
+  const [subjectsList, setSubjectsList] = useState(DEFAULT_SUBJECTS)
   const [loading, setLoading] = useState(true)
   
   // Filters
@@ -39,7 +53,19 @@ const MaterialsPage = () => {
 
   useEffect(() => {
     fetchMaterials()
+    fetchSubjects()
   }, [])
+
+  const fetchSubjects = async () => {
+    try {
+      const { data } = await supabase.from('subjects').select('name').order('name', { ascending: true })
+      if (data && data.length > 0) {
+        setSubjectsList(data.map((s) => s.name))
+      }
+    } catch (e) {
+      console.warn('Fallback to default subjects:', e)
+    }
+  }
 
   const fetchMaterials = async () => {
     setLoading(true)
@@ -101,7 +127,7 @@ const MaterialsPage = () => {
             <Gamepad2 className="w-7 h-7 text-purple-600" />
             Kho Học Liệu & Trò Chơi Tương Tác
           </h2>
-          <p className="text-sm text-slate-500">Khám phá bài giảng, tài liệu và các trò chơi trắc nghiệm hấp dẫn</p>
+          <p className="text-sm text-slate-500">Khám phá bài giảng, tài liệu và các trò chơi trắc nghiệm hấp dẫn dành cho Tiểu học</p>
         </div>
 
         {isTeacher && (
@@ -136,13 +162,11 @@ const MaterialsPage = () => {
           className="px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm font-semibold focus:ring-2 focus:ring-purple-500 outline-none"
         >
           <option value="Tất cả">Tất cả Môn Học</option>
-          <option value="Toán Học">Toán Học</option>
-          <option value="Vật Lý">Vật Lý</option>
-          <option value="Hóa Học">Hóa Học</option>
-          <option value="Ngoại Ngữ (Tiếng Anh)">Ngoại Ngữ (Tiếng Anh)</option>
-          <option value="Ngữ Văn">Ngữ Văn</option>
-          <option value="Sinh Học">Sinh Học</option>
-          <option value="Tin Học">Tin Học</option>
+          {subjectsList.map((s) => (
+            <option key={s} value={s}>
+              {s}
+            </option>
+          ))}
         </select>
 
         {/* Type Filter */}
