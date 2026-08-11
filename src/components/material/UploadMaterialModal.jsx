@@ -1,23 +1,59 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import Modal from '../common/Modal'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../context/AuthContext'
 import { Upload, Link as LinkIcon, Gamepad2, FileText, Video, Loader2 } from 'lucide-react'
 
+const DEFAULT_SUBJECTS = [
+  'Toán Học',
+  'Tiếng Việt',
+  'Tiếng Anh',
+  'Tự Nhiên & Xã Hội',
+  'Khoa Học',
+  'Lịch Sử & Địa Lý',
+  'Tin Học & Công Nghệ',
+  'Đạo Đức',
+  'Mỹ Thuật & Âm Nhạc',
+  'Hoạt Động Trải Nghiệm',
+  'Khác',
+]
+
 const UploadMaterialModal = ({ isOpen, onClose, onUploaded }) => {
   const { user } = useAuth()
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
-  const [type, setType] = useState('document') // document, video, game_iframe, game_html5
+  const [type, setType] = useState('document')
   const [fileUrl, setFileUrl] = useState('')
   const [selectedFile, setSelectedFile] = useState(null)
   const [subject, setSubject] = useState('Toán Học')
-  const [gradeLevel, setGradeLevel] = useState('Lớp 10')
+  const [subjectsList, setSubjectsList] = useState(DEFAULT_SUBJECTS)
+  const [gradeLevel, setGradeLevel] = useState('Lớp 1')
   const [tags, setTags] = useState('ôn tập, trắc nghiệm')
   const [isPublic, setIsPublic] = useState(true)
   
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState('')
+
+  useEffect(() => {
+    if (isOpen) {
+      fetchSubjects()
+    }
+  }, [isOpen])
+
+  const fetchSubjects = async () => {
+    try {
+      const { data } = await supabase.from('subjects').select('name').order('name', { ascending: true })
+      if (data && data.length > 0) {
+        const names = data.map((s) => s.name)
+        setSubjectsList(names)
+        if (!names.includes(subject)) {
+          setSubject(names[0])
+        }
+      }
+    } catch (e) {
+      console.warn('Fallback to default subjects list:', e)
+    }
+  }
 
   const handleFileChange = (e) => {
     if (e.target.files && e.target.files[0]) {
@@ -38,7 +74,6 @@ const UploadMaterialModal = ({ isOpen, onClose, onUploaded }) => {
     try {
       let finalUrl = fileUrl.trim()
 
-      // Handle file upload to Supabase Storage if file selected
       if (selectedFile) {
         const bucket = type === 'game_html5' ? 'games' : 'materials'
         const fileExt = selectedFile.name.split('.').pop()
@@ -86,7 +121,6 @@ const UploadMaterialModal = ({ isOpen, onClose, onUploaded }) => {
 
       if (insertError) throw insertError
 
-      // Reset form
       setTitle('')
       setDescription('')
       setFileUrl('')
@@ -110,7 +144,6 @@ const UploadMaterialModal = ({ isOpen, onClose, onUploaded }) => {
           </div>
         )}
 
-        {/* Type Selector */}
         <div>
           <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-2">
             Loại Học Liệu / Nội Dung *
@@ -177,14 +210,13 @@ const UploadMaterialModal = ({ isOpen, onClose, onUploaded }) => {
           <input
             type="text"
             required
-            placeholder="VD: Trò chơi Đuổi Hình Bắt Chữ - Đại Số 10"
+            placeholder="VD: Trò chơi Đuổi Hình Bắt Chữ - Toán 5"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 focus:ring-2 focus:ring-brand-500 outline-none transition"
           />
         </div>
 
-        {/* Dynamic File / Link Input */}
         {type === 'game_iframe' ? (
           <div>
             <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-1">
@@ -233,15 +265,11 @@ const UploadMaterialModal = ({ isOpen, onClose, onUploaded }) => {
               onChange={(e) => setSubject(e.target.value)}
               className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 focus:ring-2 focus:ring-brand-500 outline-none transition"
             >
-              <option value="Toán Học">Toán Học</option>
-              <option value="Vật Lý">Vật Lý</option>
-              <option value="Hóa Học">Hóa Học</option>
-              <option value="Ngoại Ngữ (Tiếng Anh)">Ngoại Ngữ (Tiếng Anh)</option>
-              <option value="Ngữ Văn">Ngữ Văn</option>
-              <option value="Sinh Học">Sinh Học</option>
-              <option value="Lịch Sử & Địa Lý">Lịch Sử & Địa Lý</option>
-              <option value="Tin Học">Tin Học</option>
-              <option value="Khác">Khác</option>
+              {subjectsList.map((s) => (
+                <option key={s} value={s}>
+                  {s}
+                </option>
+              ))}
             </select>
           </div>
 
@@ -254,10 +282,11 @@ const UploadMaterialModal = ({ isOpen, onClose, onUploaded }) => {
               onChange={(e) => setGradeLevel(e.target.value)}
               className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 focus:ring-2 focus:ring-brand-500 outline-none transition"
             >
-              <option value="Khối THCS">Khối THCS (Lớp 6-9)</option>
-              <option value="Lớp 10">Lớp 10</option>
-              <option value="Lớp 11">Lớp 11</option>
-              <option value="Lớp 12">Lớp 12</option>
+              <option value="Lớp 1">Lớp 1</option>
+              <option value="Lớp 2">Lớp 2</option>
+              <option value="Lớp 3">Lớp 3</option>
+              <option value="Lớp 4">Lớp 4</option>
+              <option value="Lớp 5">Lớp 5</option>
               <option value="Tất cả các khối">Tất cả các khối</option>
             </select>
           </div>
