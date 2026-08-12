@@ -59,6 +59,7 @@ const UploadMaterialModal = ({ isOpen, onClose, onUploaded }) => {
   const handleFileChange = (e) => {
     if (e.target.files && e.target.files[0]) {
       setSelectedFile(e.target.files[0])
+      setFileUrl('')
     }
   }
 
@@ -94,7 +95,7 @@ const UploadMaterialModal = ({ isOpen, onClose, onUploaded }) => {
       }
 
       if (!finalUrl && (type === 'game_iframe' || type === 'video')) {
-        setError('Vui lòng nhập đường dẫn URL hoặc chọn file tải lên!')
+        setError('Vui lòng chọn file tải lên hoặc nhập đường dẫn liên kết!')
         setUploading(false)
         return
       }
@@ -244,7 +245,7 @@ const UploadMaterialModal = ({ isOpen, onClose, onUploaded }) => {
             </label>
             <div className="relative">
               <input
-                type="url"
+                type="text"
                 required
                 placeholder="https://wordwall.net/embed/..."
                 value={fileUrl}
@@ -296,26 +297,30 @@ const UploadMaterialModal = ({ isOpen, onClose, onUploaded }) => {
               )}
             </div>
 
-            <div className="text-center text-xs text-slate-400 font-semibold uppercase">Hoặc dán đường dẫn</div>
-            <div className="relative">
-              <input
-                type="url"
-                placeholder="https://example.com/file.pdf"
-                value={fileUrl}
-                onChange={(e) => setFileUrl(e.target.value)}
-                className="w-full pl-4 pr-10 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 focus:ring-2 focus:ring-brand-500 outline-none transition text-sm"
-              />
-              {fileUrl && (
-                <button
-                  type="button"
-                  onClick={() => setFileUrl('')}
-                  className="absolute right-3 top-3 text-slate-400 hover:text-red-600 transition"
-                  title="Xóa link"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              )}
-            </div>
+            {!selectedFile && (
+              <>
+                <div className="text-center text-xs text-slate-400 font-semibold uppercase">Hoặc dán đường dẫn web (Link Google Drive / Web)</div>
+                <div className="relative">
+                  <input
+                    type="text"
+                    placeholder="https://example.com/file.pdf (không bắt buộc nếu đã chọn tệp ở trên)"
+                    value={fileUrl}
+                    onChange={(e) => setFileUrl(e.target.value)}
+                    className="w-full pl-4 pr-10 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 focus:ring-2 focus:ring-brand-500 outline-none transition text-sm"
+                  />
+                  {fileUrl && (
+                    <button
+                      type="button"
+                      onClick={() => setFileUrl('')}
+                      className="absolute right-3 top-3 text-slate-400 hover:text-red-600 transition"
+                      title="Xóa link"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
+              </>
+            )}
           </div>
         )}
 
@@ -375,7 +380,7 @@ const UploadMaterialModal = ({ isOpen, onClose, onUploaded }) => {
           </label>
           <textarea
             rows={2}
-            placeholder="Hướng dẫn cho học sinh khi xem bài hoặc chơi game..."
+            placeholder="Hướng dẫn cho học sinh khi xem bài hoặc chơi game... (VD: Đọc kĩ đề và luyện tập nhiều lần cho nhớ)"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 focus:ring-2 focus:ring-brand-500 outline-none transition text-sm"
@@ -418,3 +423,5 @@ const UploadMaterialModal = ({ isOpen, onClose, onUploaded }) => {
 }
 
 export default UploadMaterialModal
+    
+   
