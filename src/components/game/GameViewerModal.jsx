@@ -44,8 +44,8 @@ const GameViewerModal = ({ isOpen, onClose, material, assignmentId, onComplete }
 
   // Continuous annotations array for full document
   const [annotations, setAnnotations] = useState([])
-  const [history, setHistory] = useState([])
-  const [historyIndex, setHistoryIndex] = useState(-1)
+  const [history, setHistory] = useState([[]])
+  const [historyIndex, setHistoryIndex] = useState(0)
 
   // Timer & Submission
   const [seconds, setSeconds] = useState(0)
@@ -65,6 +65,22 @@ const GameViewerModal = ({ isOpen, onClose, material, assignmentId, onComplete }
   const scrollContainerRef = useRef(null)
   const isDrawing = useRef(false)
   const currentShape = useRef(null)
+
+  // Keyboard shortcut for Ctrl+Z (Undo) and Ctrl+Y (Redo)
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (!isOpen) return
+      if (e.ctrlKey && e.key.toLowerCase() === 'z') {
+        e.preventDefault()
+        handleUndo()
+      } else if (e.ctrlKey && e.key.toLowerCase() === 'y') {
+        e.preventDefault()
+        handleRedo()
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [isOpen, historyIndex, history])
 
   useEffect(() => {
     let interval = null
@@ -104,15 +120,18 @@ const GameViewerModal = ({ isOpen, onClose, material, assignmentId, onComplete }
         setSubmissionId(data.id)
         setSubmissionStatus(data.status || 'in_progress')
         const annData = data.annotations_data
+        let initialShapes = []
         if (Array.isArray(annData)) {
-          setAnnotations(annData)
+          initialShapes = annData
         } else if (annData && typeof annData === 'object') {
-          const combined = []
           Object.values(annData).forEach((pageShapes) => {
-            if (Array.isArray(pageShapes)) combined.push(...pageShapes)
+            if (Array.isArray(pageShapes)) initialShapes.push(...pageShapes)
           })
-          setAnnotations(combined)
         }
+        setAnnotations(initialShapes)
+        setHistory([initialShapes])
+        setHistoryIndex(0)
+
         if (data.saved_at) {
           setLastSavedTime(new Date(data.saved_at).toLocaleTimeString('vi-VN'))
         }
@@ -207,7 +226,6 @@ const GameViewerModal = ({ isOpen, onClose, material, assignmentId, onComplete }
 
   const handlePointerDown = (e) => {
     if (submissionStatus === 'submitted' || submissionStatus === 'graded') return
-    // Prevent default native image/text drag ghosts
     if (e.type === 'mousedown') {
       e.preventDefault()
     }
@@ -258,7 +276,7 @@ const GameViewerModal = ({ isOpen, onClose, material, assignmentId, onComplete }
     const updatedShapes = [...annotations, currentShape.current]
 
     setAnnotations(updatedShapes)
-    saveHistory(updatedShapes)
+    pushToHistory(updatedShapes)
     autoSave(updatedShapes)
     currentShape.current = null
   }
@@ -274,7 +292,7 @@ const GameViewerModal = ({ isOpen, onClose, material, assignmentId, onComplete }
     })
 
     setAnnotations(filtered)
-    saveHistory(filtered)
+    pushToHistory(filtered)
     autoSave(filtered)
   }
 
@@ -295,13 +313,13 @@ const GameViewerModal = ({ isOpen, onClose, material, assignmentId, onComplete }
 
     const updated = [...annotations, textShape]
     setAnnotations(updated)
-    saveHistory(updated)
+    pushToHistory(updated)
     autoSave(updated)
     setTextInputPos(null)
     setTextInputValue('')
   }
 
-  const saveHistory = (newAnnotations) => {
+  const pushToHistory = (newAnnotations) => {
     const nextHistory = history.slice(0, historyIndex + 1)
     nextHistory.push(newAnnotations)
     setHistory(nextHistory)
@@ -312,8 +330,9 @@ const GameViewerModal = ({ isOpen, onClose, material, assignmentId, onComplete }
     if (historyIndex > 0) {
       const prevIndex = historyIndex - 1
       setHistoryIndex(prevIndex)
-      setAnnotations(history[prevIndex])
-      autoSave(history[prevIndex])
+      const prevData = history[prevIndex]
+      setAnnotations(prevData)
+      autoSave(prevData)
     }
   }
 
@@ -321,8 +340,9 @@ const GameViewerModal = ({ isOpen, onClose, material, assignmentId, onComplete }
     if (historyIndex < history.length - 1) {
       const nextIndex = historyIndex + 1
       setHistoryIndex(nextIndex)
-      setAnnotations(history[nextIndex])
-      autoSave(history[nextIndex])
+      const nextData = history[nextIndex]
+      setAnnotations(nextData)
+      autoSave(nextData)
     }
   }
 
@@ -485,7 +505,7 @@ const GameViewerModal = ({ isOpen, onClose, material, assignmentId, onComplete }
 
               <div className="w-px h-6 bg-slate-800 mx-1" />
 
-              {/* Colors */}
+              {/* Color Palette */}
               <div className="flex items-center gap-1 px-1">
                 {COLOR_OPTIONS.map((c) => (
                   <button
@@ -498,6 +518,31 @@ const GameViewerModal = ({ isOpen, onClose, material, assignmentId, onComplete }
                     title={c.name}
                   />
                 ))}
+              </div>
+
+              <div className="w-px h-6 bg-slate-800 mx-1" />
+
+              {/* UNDO & REDO BUTTONS (TRỞ LẠI & LÀM LẠI) */}
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={handleUndo}
+                  disabled={historyIndex <= 0}
+                  className="px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 disabled:opacity-30 text-white rounded-xl text-xs font-bold flex items-center gap-1 transition shadow-xs"
+                  title="Trở lại nét vừa vẽ (Ctrl + Z)"
+                >
+                  <Undo2 className="w-4 h-4 text-sky-400" />
+                  <span>Trở lại</span>
+                </button>
+
+                <button
+                  onClick={handleRedo}
+                  disabled={historyIndex >= history.length - 1}
+                  className="px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 disabled:opacity-30 text-white rounded-xl text-xs font-bold flex items-center gap-1 transition shadow-xs"
+                  title="Khôi phục nét sau (Ctrl + Y)"
+                >
+                  <Redo2 className="w-4 h-4 text-purple-400" />
+                  <span>Làm lại</span>
+                </button>
               </div>
             </div>
           )}
@@ -541,7 +586,7 @@ const GameViewerModal = ({ isOpen, onClose, material, assignmentId, onComplete }
           </div>
         </div>
 
-        {/* FULL SOLID WHITE PAPER SHEET CONTAINER (SOLID OPAQUE BG PREVENTS ALL GHOSTING) */}
+        {/* FULL SOLID WHITE PAPER SHEET CONTAINER */}
         <div
           ref={scrollContainerRef}
           className="flex-1 overflow-y-auto bg-slate-950 flex flex-col items-center justify-start p-4 relative scroll-smooth"
@@ -553,7 +598,7 @@ const GameViewerModal = ({ isOpen, onClose, material, assignmentId, onComplete }
               minHeight: `${4500 * zoom}px`,
             }}
           >
-            {/* Background Full Document View (SOLID WHITE BASE PREVENTS OVERLAY GHOSTING) */}
+            {/* Background Full Document View */}
             {fileUrl ? (
               <iframe
                 src={viewerUrl}
@@ -567,7 +612,7 @@ const GameViewerModal = ({ isOpen, onClose, material, assignmentId, onComplete }
               </div>
             )}
 
-            {/* Interactive Canvas Overlay (DRAG PREVENTED, ZERO SELECTION GHOSTING) */}
+            {/* Interactive Canvas Overlay */}
             <canvas
               ref={canvasRef}
               onMouseDown={handlePointerDown}
