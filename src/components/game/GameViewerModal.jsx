@@ -22,6 +22,7 @@ import {
   Clock,
   Sparkles,
   HelpCircle,
+  Maximize2,
   ExternalLink,
 } from 'lucide-react'
 
@@ -38,8 +39,9 @@ const GameViewerModal = ({ isOpen, onClose, material, assignmentId, onComplete }
 
   // State
   const [currentPage, setCurrentPage] = useState(1)
-  const [totalPages, setTotalPages] = useState(1)
+  const [totalPages, setTotalPages] = useState(2) // Standard 2 pages for Primary Worksheets
   const [zoom, setZoom] = useState(1)
+  const [viewMode, setViewMode] = useState('fit') // 'fit' (Trọn trang) or 'full' (Cuộn toàn bộ)
 
   // Tools
   const [tool, setTool] = useState('circle') // 'circle', 'pen', 'highlighter', 'rectangle', 'line', 'text', 'eraser'
@@ -64,8 +66,9 @@ const GameViewerModal = ({ isOpen, onClose, material, assignmentId, onComplete }
   const [textInputPos, setTextInputPos] = useState(null)
   const [textInputValue, setTextInputValue] = useState('')
 
-  // Canvas Refs
+  // Canvas Refs & Container Scroll
   const canvasRef = useRef(null)
+  const scrollContainerRef = useRef(null)
   const isDrawing = useRef(false)
   const currentShape = useRef(null)
 
@@ -75,6 +78,14 @@ const GameViewerModal = ({ isOpen, onClose, material, assignmentId, onComplete }
     let interval = null
     if (isOpen) {
       setSeconds(0)
+      setCurrentPage(1)
+      setTotalPages(2)
+      
+      // Auto-scroll to top so Header ("Họ và tên...") is always visible
+      if (scrollContainerRef.current) {
+        scrollContainerRef.current.scrollTop = 0
+      }
+
       interval = setInterval(() => {
         setSeconds((prev) => prev + 1)
       }, 1000)
@@ -112,7 +123,7 @@ const GameViewerModal = ({ isOpen, onClose, material, assignmentId, onComplete }
 
   useEffect(() => {
     redrawCanvas()
-  }, [currentPage, annotations, zoom, isOpen])
+  }, [currentPage, annotations, zoom, isOpen, viewMode])
 
   const redrawCanvas = () => {
     const canvas = canvasRef.current
@@ -389,9 +400,12 @@ const GameViewerModal = ({ isOpen, onClose, material, assignmentId, onComplete }
   const fileUrl = material.file_url || ''
   const formatTime = (sec) => `${Math.floor(sec / 60).toString().padStart(2, '0')}:${(sec % 60).toString().padStart(2, '0')}`
 
+  // Viewer iframe URL with page target
+  const viewerUrl = `https://docs.google.com/viewer?url=${encodeURIComponent(fileUrl)}&embedded=true#page=${currentPage}`
+
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={material.title} maxWidth="max-w-6xl">
-      <div className="flex flex-col h-[80vh] bg-slate-900 rounded-2xl overflow-hidden text-slate-100 select-none shadow-2xl relative border border-slate-800">
+      <div className="flex flex-col h-[82vh] bg-slate-900 rounded-2xl overflow-hidden text-slate-100 select-none shadow-2xl relative border border-slate-800">
         {/* TOOLBAR TOP BAR */}
         <div className="p-3 bg-slate-950 border-b border-slate-800 flex flex-wrap items-center justify-between gap-3 shrink-0">
           {/* Tools */}
@@ -530,17 +544,24 @@ const GameViewerModal = ({ isOpen, onClose, material, assignmentId, onComplete }
         </div>
 
         {/* DOCUMENT CANVAS CONTAINER */}
-        <div className="flex-1 overflow-auto bg-slate-950 flex items-center justify-center p-4 relative">
+        <div
+          ref={scrollContainerRef}
+          className="flex-1 overflow-y-auto bg-slate-950 flex flex-col items-center justify-start p-4 relative"
+        >
           <div
-            className="relative bg-white shadow-2xl rounded-xl overflow-hidden"
-            style={{ width: `${800 * zoom}px`, minHeight: `${1000 * zoom}px` }}
+            className="relative bg-white shadow-2xl rounded-xl overflow-hidden my-auto"
+            style={{
+              width: `${820 * zoom}px`,
+              height: viewMode === 'fit' ? `${1150 * zoom}px` : `${2300 * zoom}px`,
+            }}
           >
             {/* Background Document View */}
             {fileUrl ? (
               <iframe
-                src={`https://docs.google.com/viewer?url=${encodeURIComponent(fileUrl)}&embedded=true`}
+                key={`iframe_p${currentPage}_v${viewMode}`}
+                src={viewerUrl}
                 title={material.title}
-                className="w-full h-full min-h-[1000px] border-0 pointer-events-none"
+                className="w-full h-full border-0 pointer-events-none"
               />
             ) : (
               <div className="p-8 text-slate-800 font-sans text-center">
@@ -591,22 +612,42 @@ const GameViewerModal = ({ isOpen, onClose, material, assignmentId, onComplete }
         {/* FOOTER */}
         <div className="p-3 bg-slate-950 border-t border-slate-800 flex items-center justify-between text-xs text-slate-400 shrink-0">
           <div className="flex items-center gap-2">
-            <span>Tiến độ:</span>
-            <span className="font-bold text-white bg-slate-800 px-2 py-0.5 rounded-md">Trang {currentPage}</span>
+            <span>Chế độ xem:</span>
+            <button
+              onClick={() => setViewMode((m) => (m === 'fit' ? 'full' : 'fit'))}
+              className="px-2.5 py-1 bg-slate-900 hover:bg-slate-800 text-white rounded-lg border border-slate-800 font-bold"
+            >
+              {viewMode === 'fit' ? '📄 Xem Trọn Trang' : '📜 Xem Cuộn Tất Cả'}
+            </button>
           </div>
 
           <div className="flex items-center gap-2">
             <button
-              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+              onClick={() => {
+                if (currentPage > 1) {
+                  setCurrentPage(currentPage - 1)
+                  if (scrollContainerRef.current) scrollContainerRef.current.scrollTop = 0
+                }
+              }}
               disabled={currentPage === 1}
               className="p-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-lg disabled:opacity-40"
+              title="Trang trước"
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
-            <span className="font-mono text-xs font-bold text-slate-300">Trang {currentPage}</span>
+            <span className="font-mono text-xs font-bold text-slate-300">
+              Trang {currentPage} / {totalPages}
+            </span>
             <button
-              onClick={() => setCurrentPage((p) => p + 1)}
-              className="p-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-lg"
+              onClick={() => {
+                if (currentPage < totalPages) {
+                  setCurrentPage(currentPage + 1)
+                  if (scrollContainerRef.current) scrollContainerRef.current.scrollTop = 0
+                }
+              }}
+              disabled={currentPage >= totalPages}
+              className="p-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-lg disabled:opacity-40"
+              title="Trang sau"
             >
               <ChevronRight className="w-4 h-4" />
             </button>
@@ -618,13 +659,13 @@ const GameViewerModal = ({ isOpen, onClose, material, assignmentId, onComplete }
           <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
             <div className="bg-slate-900 border border-slate-800 text-white rounded-3xl p-6 max-w-md w-full text-center space-y-4">
               <h3 className="text-xl font-extrabold">Xác Nhận Nộp Bài?</h3>
-              <p className="text-sm text-slate-300">Em có chắc chắn muốn nộp bài không?</p>
+              <p className="text-sm text-slate-300">Em có chắc chắn muốn nộp bài làm này không?</p>
               <div className="flex gap-3 pt-2">
                 <button
                   onClick={() => setShowConfirmModal(false)}
                   className="w-full py-2.5 bg-slate-800 font-bold text-xs rounded-xl"
                 >
-                  Quay lại
+                  Quay lại làm bài
                 </button>
                 <button
                   onClick={handleFinalSubmit}
@@ -643,12 +684,12 @@ const GameViewerModal = ({ isOpen, onClose, material, assignmentId, onComplete }
             <div className="bg-slate-900 border border-emerald-500/40 text-white rounded-3xl p-6 max-w-md w-full text-center space-y-4">
               <Sparkles className="w-10 h-10 text-emerald-400 mx-auto animate-bounce" />
               <h3 className="text-2xl font-extrabold text-emerald-400">🎉 NỘP BÀI THÀNH CÔNG!</h3>
-              <p className="text-sm text-slate-300">Bài làm của em đã được gửi đến giáo viên.</p>
+              <p className="text-sm text-slate-300">Bài làm của em đã được tự động lưu và gửi đến giáo viên.</p>
               <button
                 onClick={() => setShowSuccessModal(false)}
                 className="w-full py-3 bg-emerald-600 font-bold text-xs text-white rounded-xl"
               >
-                Xem Bài Làm
+                Xem Bài Làm Của Em
               </button>
             </div>
           </div>
@@ -659,3 +700,4 @@ const GameViewerModal = ({ isOpen, onClose, material, assignmentId, onComplete }
 }
 
 export default GameViewerModal
+
