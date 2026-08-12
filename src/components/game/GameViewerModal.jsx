@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import Modal from '../common/Modal'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../context/AuthContext'
-import { Trophy, Clock, CheckCircle2, Loader2, Maximize2, ExternalLink } from 'lucide-react'
+import { Trophy, Clock, CheckCircle2, Loader2, Maximize2, ExternalLink, RefreshCw, FileText } from 'lucide-react'
 
 const isOfficeFile = (url) => {
   if (!url) return false
@@ -42,6 +42,7 @@ const GameViewerModal = ({ isOpen, onClose, material, assignmentId, onComplete }
   const [submitting, setSubmitting] = useState(false)
   const [completed, setCompleted] = useState(false)
   const [message, setMessage] = useState('')
+  const [viewerEngine, setViewerEngine] = useState('office') // 'office' or 'google'
 
   useEffect(() => {
     let interval = null
@@ -49,6 +50,7 @@ const GameViewerModal = ({ isOpen, onClose, material, assignmentId, onComplete }
       setSeconds(0)
       setCompleted(false)
       setMessage('')
+      setViewerEngine('office')
       interval = setInterval(() => {
         setSeconds((prev) => prev + 1)
       }, 1000)
@@ -100,13 +102,17 @@ const GameViewerModal = ({ isOpen, onClose, material, assignmentId, onComplete }
   if (!material) return null
 
   const fileUrl = material.file_url || ''
+  const isOffice = isOfficeFile(fileUrl)
+
+  const officeViewerUrl = `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(fileUrl)}`
+  const googleViewerUrl = `https://docs.google.com/viewer?url=${encodeURIComponent(fileUrl)}&embedded=true`
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={material.title} maxWidth="max-w-5xl">
-      <div className="space-y-4">
+      <div className="space-y-3">
         {/* Top Control Bar */}
         <div className="flex flex-wrap items-center justify-between gap-3 p-3 bg-slate-100 dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800">
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
             <div className="flex items-center gap-1.5 font-mono text-sm font-bold text-brand-600 dark:text-brand-400 bg-white dark:bg-slate-800 px-3 py-1.5 rounded-xl shadow-xs">
               <Clock className="w-4 h-4" />
               <span>{formatTime(seconds)}</span>
@@ -114,6 +120,31 @@ const GameViewerModal = ({ isOpen, onClose, material, assignmentId, onComplete }
             <span className="text-xs font-semibold px-2.5 py-1 bg-purple-100 dark:bg-purple-950 text-purple-700 dark:text-purple-300 rounded-lg uppercase">
               {material.type}
             </span>
+
+            {isOffice && (
+              <div className="hidden sm:flex items-center gap-1 bg-white dark:bg-slate-800 p-1 rounded-xl border border-slate-200 dark:border-slate-700 text-xs">
+                <button
+                  onClick={() => setViewerEngine('office')}
+                  className={`px-2.5 py-1 rounded-lg font-bold transition ${
+                    viewerEngine === 'office'
+                      ? 'bg-brand-600 text-white shadow-xs'
+                      : 'text-slate-500 hover:text-slate-800 dark:text-slate-400'
+                  }`}
+                >
+                  Trình Xem MS Office
+                </button>
+                <button
+                  onClick={() => setViewerEngine('google')}
+                  className={`px-2.5 py-1 rounded-lg font-bold transition ${
+                    viewerEngine === 'google'
+                      ? 'bg-brand-600 text-white shadow-xs'
+                      : 'text-slate-500 hover:text-slate-800 dark:text-slate-400'
+                  }`}
+                >
+                  Trình Xem Google
+                </button>
+              </div>
+            )}
           </div>
 
           <div className="flex items-center gap-3">
@@ -122,10 +153,10 @@ const GameViewerModal = ({ isOpen, onClose, material, assignmentId, onComplete }
                 href={fileUrl}
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex items-center gap-1 text-xs font-bold text-slate-500 hover:text-brand-600 px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800"
+                className="inline-flex items-center gap-1 text-xs font-bold text-slate-500 hover:text-brand-600 px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 transition"
               >
                 <ExternalLink className="w-3.5 h-3.5" />
-                Mở Cửa Sổ Mới / Tải Về
+                Mở Cửa Sổ Mới
               </a>
             )}
 
@@ -175,9 +206,9 @@ const GameViewerModal = ({ isOpen, onClose, material, assignmentId, onComplete }
             <video src={fileUrl} controls className="w-full h-full object-contain bg-black" />
           ) : isPdfFile(fileUrl) ? (
             <iframe src={fileUrl} title={material.title} className="w-full h-full border-0 bg-white" />
-          ) : isOfficeFile(fileUrl) ? (
+          ) : isOffice ? (
             <iframe
-              src={`https://docs.google.com/viewer?url=${encodeURIComponent(fileUrl)}&embedded=true`}
+              src={viewerEngine === 'office' ? officeViewerUrl : googleViewerUrl}
               title={material.title}
               className="w-full h-full border-0 bg-white"
             />
@@ -185,7 +216,7 @@ const GameViewerModal = ({ isOpen, onClose, material, assignmentId, onComplete }
             <img src={fileUrl} alt={material.title} className="max-w-full max-h-full object-contain" />
           ) : fileUrl ? (
             <iframe
-              src={`https://docs.google.com/viewer?url=${encodeURIComponent(fileUrl)}&embedded=true`}
+              src={googleViewerUrl}
               title={material.title}
               className="w-full h-full border-0 bg-white"
             />
@@ -205,3 +236,4 @@ const GameViewerModal = ({ isOpen, onClose, material, assignmentId, onComplete }
 }
 
 export default GameViewerModal
+ 
