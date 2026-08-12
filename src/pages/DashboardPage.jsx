@@ -268,7 +268,7 @@ const DashboardPage = () => {
       }
     } catch (err) {
       console.error('Error loading dashboard data:', err)
-    } fontally {
+    } finally {
       setLoading(false)
     }
   }
