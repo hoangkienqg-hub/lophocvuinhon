@@ -6,7 +6,6 @@ import LoadingSpinner from '../components/common/LoadingSpinner'
 import CreateClassModal from '../components/class/CreateClassModal'
 import JoinClassModal from '../components/class/JoinClassModal'
 import UploadMaterialModal from '../components/material/UploadMaterialModal'
-import GameViewerModal from '../components/game/GameViewerModal'
 import {
   Users,
   Gamepad2,
@@ -25,14 +24,16 @@ import {
   Play,
   RotateCcw,
   Zap,
+  Check,
+  X,
 } from 'lucide-react'
 
-// Fun Mini-Games for Primary Students
+// Fun Mini-Games Metadata
 const FUN_GAMES = [
   {
     id: 'math_fast',
     title: '🧮 Nhanh Như Chớp - Phép Tính Nhanh',
-    description: 'Thử thách tính nhẩm 10 câu cộng trừ nhân chia siêu tốc trong 30 giây!',
+    description: 'Thử thách tính nhẩm 5 câu cộng trừ nhân chia siêu tốc!',
     category: 'Toán Học',
     color: 'from-amber-500 to-orange-600',
     icon: '⚡',
@@ -40,7 +41,7 @@ const FUN_GAMES = [
   {
     id: 'vietnamese_quiz',
     title: '📖 Đố Vui Tiếng Việt & Ca Dao',
-    description: 'Giải mã những câu đố dân gian vui nhộn và ghép từ Tiếng Việt đúng!',
+    description: 'Giải mã các câu đố ca dao, tục ngữ và chính tả Tiếng Việt Tiểu học!',
     category: 'Tiếng Việt',
     color: 'from-emerald-500 to-teal-600',
     icon: '🌟',
@@ -48,7 +49,7 @@ const FUN_GAMES = [
   {
     id: 'science_explore',
     title: '🔬 Khám Phá Thế Giới Tự Nhiên',
-    description: 'Tìm hiểu về muôn loài động vật, cây cỏ và vũ trụ bao la qua hình ảnh!',
+    description: 'Tìm hiểu về động thực vật, vũ trụ và môi trường sống xung quanh!',
     category: 'Khoa Học',
     color: 'from-blue-500 to-indigo-600',
     icon: '🌍',
@@ -56,12 +57,104 @@ const FUN_GAMES = [
   {
     id: 'english_fun',
     title: '🇬🇧 English Vocabulary Fun',
-    description: 'Học từ vựng Tiếng Anh Tiểu học qua hình ảnh minh họa sinh động!',
+    description: 'Thử thách vốn từ vựng Tiếng Anh Tiểu học siêu sinh động!',
     category: 'Tiếng Anh',
     color: 'from-purple-500 to-pink-600',
     icon: '🎮',
   },
 ]
+
+// Distinct Question Bank for Each Game
+const GAME_QUESTION_BANK = {
+  math_fast: [
+    { question: '25 + 15 = ?', options: ['30', '40', '50', '35'], answer: '40' },
+    { question: '50 - 18 = ?', options: ['32', '28', '38', '42'], answer: '32' },
+    { question: '9 x 6 = ?', options: ['45', '54', '63', '48'], answer: '54' },
+    { question: '100 : 25 = ?', options: ['2', '5', '4', '10'], answer: '4' },
+    { question: '45 + 35 = ?', options: ['70', '80', '90', '75'], answer: '80' },
+  ],
+  vietnamese_quiz: [
+    {
+      question: 'Nhiễu điều phủ lấy giá gương / Người trong một nước phải ... nhau cùng.',
+      options: ['thương', 'yêu', 'giúp', 'nhớ'],
+      answer: 'thương',
+    },
+    {
+      question: 'Từ nào dưới đây viết ĐÚNG chính tả?',
+      options: ['Chong chóng', 'Trong chóng', 'Chong chón', 'Trong chón'],
+      answer: 'Chong chóng',
+    },
+    {
+      question: 'Điền từ thích hợp: "Con có cha như nhà có ..."',
+      options: ['nóc', 'cột', 'mái', 'tường'],
+      answer: 'nóc',
+    },
+    {
+      question: 'Từ nào đồng nghĩa với "chăm chỉ"?',
+      options: ['Cần cù', 'Lười biếng', 'Nhanh nhẹn', 'Thật thà'],
+      answer: 'Cần cù',
+    },
+    {
+      question: 'Điền từ vào thành ngữ: "Ăn quả nhớ kẻ ... cây."',
+      options: ['trồng', 'hái', 'tưới', 'bảo vệ'],
+      answer: 'trồng',
+    },
+  ],
+  science_explore: [
+    {
+      question: 'Cây xanh hấp thụ khí gì trong quá trình quang hợp dưới ánh nắng?',
+      options: ['Khí Cacbonic', 'Khí Ôxy', 'Khí Nitơ', 'Khí Hydro'],
+      answer: 'Khí Cacbonic',
+    },
+    {
+      question: 'Động vật nào sau đây đẻ trứng?',
+      options: ['Con Gà', 'Con Bò', 'Con Chó', 'Con Mèo'],
+      answer: 'Con Gà',
+    },
+    {
+      question: 'Nước hoa quả tươi cung cấp nhiều chất gì cho cơ thể?',
+      options: ['Vitamin', 'Chất béo', 'Đường hóa học', 'Muối biển'],
+      answer: 'Vitamin',
+    },
+    {
+      question: 'Trái Đất quay quanh vật thể nào trong Hệ Mặt Trời?',
+      options: ['Mặt Trời', 'Mặt Trăng', 'Sao Hỏa', 'Sao Kim'],
+      answer: 'Mặt Trời',
+    },
+    {
+      question: 'Loài vật nào được mệnh danh là "Chúa sơn lâm"?',
+      options: ['Con Hổ (Hùm)', 'Sư Tử', 'Voi', 'Gấu'],
+      answer: 'Con Hổ (Hùm)',
+    },
+  ],
+  english_fun: [
+    {
+      question: 'Từ "Apple" trong Tiếng Việt nghĩa là quả gì?',
+      options: ['Quả Táo', 'Quả Cam', 'Quả Chuối', 'Quả Dưa hấu'],
+      answer: 'Quả Táo',
+    },
+    {
+      question: 'Từ Tiếng Anh chỉ "Con Mèo" là gì?',
+      options: ['Cat', 'Dog', 'Bird', 'Fish'],
+      answer: 'Cat',
+    },
+    {
+      question: 'Số "10" trong Tiếng Anh đọc là gì?',
+      options: ['Ten', 'Five', 'Eight', 'Seven'],
+      answer: 'Ten',
+    },
+    {
+      question: 'Từ Tiếng Anh chỉ "Mặt Trời" là gì?',
+      options: ['Sun', 'Moon', 'Star', 'Cloud'],
+      answer: 'Sun',
+    },
+    {
+      question: 'Từ "Teacher" có nghĩa là gì?',
+      options: ['Giáo viên', 'Học sinh', 'Bác sĩ', 'Kỹ sư'],
+      answer: 'Giáo viên',
+    },
+  ],
+}
 
 const DashboardPage = () => {
   const { user, profile, role, isAdmin, isTeacher } = useAuth()
@@ -83,21 +176,13 @@ const DashboardPage = () => {
 
   // Mini-Game Interactive State
   const [activeMiniGame, setActiveMiniGame] = useState(null)
+  const [currentQuestions, setCurrentQuestions] = useState([])
   const [gameScore, setGameScore] = useState(0)
   const [gameQuestionIndex, setGameQuestionIndex] = useState(0)
   const [gameTimer, setGameTimer] = useState(30)
   const [gameActive, setGameActive] = useState(false)
-  const [userAnswer, setUserAnswer] = useState('')
   const [gameFeedback, setGameFeedback] = useState('')
-
-  // Math Quick Quiz Data
-  const [mathQuestions, setMathQuestions] = useState([
-    { num1: 25, num2: 15, op: '+', answer: 40 },
-    { num1: 50, num2: 18, op: '-', answer: 32 },
-    { num1: 9, num2: 6, op: 'x', answer: 54 },
-    { num1: 100, num2: 25, op: ':', answer: 4 },
-    { num1: 45, num2: 35, op: '+', answer: 80 },
-  ])
+  const [selectedOption, setSelectedOption] = useState(null)
 
   useEffect(() => {
     if (user) {
@@ -183,45 +268,45 @@ const DashboardPage = () => {
       }
     } catch (err) {
       console.error('Error loading dashboard data:', err)
-    } finally {
+    } fontally {
       setLoading(false)
     }
   }
 
   const startMiniGame = (game) => {
     setActiveMiniGame(game)
+    const questions = GAME_QUESTION_BANK[game.id] || GAME_QUESTION_BANK['math_fast']
+    setCurrentQuestions(questions)
     setGameScore(0)
     setGameQuestionIndex(0)
     setGameTimer(30)
     setGameActive(true)
-    setUserAnswer('')
     setGameFeedback('')
+    setSelectedOption(null)
   }
 
-  const handleMathAnswer = (e) => {
-    e.preventDefault()
-    if (!userAnswer.trim()) return
+  const handleSelectOption = (opt) => {
+    if (!gameActive || selectedOption !== null) return
+    setSelectedOption(opt)
 
-    const currentQ = mathQuestions[gameQuestionIndex]
-    if (parseInt(userAnswer) === currentQ.answer) {
+    const currentQ = currentQuestions[gameQuestionIndex]
+    if (opt === currentQ.answer) {
       setGameScore((s) => s + 20)
       setGameFeedback('🎉 Chính xác! +20 Điểm ⭐')
     } else {
-      setGameFeedback(`❌ Chưa đúng rồi! Đáp án đúng là ${currentQ.answer}`)
+      setGameFeedback(`❌ Rất tiếc! Đáp án đúng là: ${currentQ.answer}`)
     }
 
-    setUserAnswer('')
-    if (gameQuestionIndex < mathQuestions.length - 1) {
-      setTimeout(() => {
+    setTimeout(() => {
+      setSelectedOption(null)
+      setGameFeedback('')
+      if (gameQuestionIndex < currentQuestions.length - 1) {
         setGameQuestionIndex((i) => i + 1)
-        setGameFeedback('')
-      }, 1200)
-    } else {
-      setTimeout(() => {
+      } else {
         setGameActive(false)
         setGameFeedback('🏆 Tuyệt vời! Bạn đã hoàn thành xuất sắc thử thách!')
-      }, 1200)
-    }
+      }
+    }, 1200)
   }
 
   if (loading) {
@@ -370,8 +455,8 @@ const DashboardPage = () => {
           ))}
         </div>
 
-        {/* ACTIVE MINI-GAME INTERACTIVE CARD */}
-        {activeMiniGame && (
+        {/* ACTIVE MINI-GAME INTERACTIVE CARD WITH SUBJECT MATCHING QUESTIONS */}
+        {activeMiniGame && currentQuestions.length > 0 && (
           <div className="p-6 bg-slate-900 text-white rounded-3xl border border-purple-500/50 shadow-2xl space-y-4 animate-fade-in relative">
             <button
               onClick={() => setActiveMiniGame(null)}
@@ -385,7 +470,7 @@ const DashboardPage = () => {
                 <span className="text-3xl">{activeMiniGame.icon}</span>
                 <div>
                   <h4 className="font-extrabold text-lg text-purple-400">{activeMiniGame.title}</h4>
-                  <p className="text-xs text-slate-400">Trả lời nhanh các câu hỏi để tích lũy Sao Thưởng!</p>
+                  <p className="text-xs text-slate-400">Bấm chọn đáp án đúng để tích lũy Sao Thưởng!</p>
                 </div>
               </div>
 
@@ -403,35 +488,44 @@ const DashboardPage = () => {
             </div>
 
             {gameActive ? (
-              <div className="space-y-4 max-w-md mx-auto text-center py-4">
+              <div className="space-y-4 max-w-xl mx-auto text-center py-2">
                 <div className="text-xs font-bold uppercase text-purple-300">
-                  Câu hỏi {gameQuestionIndex + 1} / {mathQuestions.length}
+                  Câu hỏi {gameQuestionIndex + 1} / {currentQuestions.length} ({activeMiniGame.category})
                 </div>
 
-                <div className="p-6 bg-slate-800 rounded-2xl border border-slate-700 text-3xl font-extrabold font-mono tracking-wider">
-                  {mathQuestions[gameQuestionIndex].num1} {mathQuestions[gameQuestionIndex].op} {mathQuestions[gameQuestionIndex].num2} = ?
+                <div className="p-5 bg-slate-800/90 rounded-2xl border border-slate-700 text-lg sm:text-xl font-bold leading-relaxed shadow-inner">
+                  {currentQuestions[gameQuestionIndex].question}
                 </div>
 
-                <form onSubmit={handleMathAnswer} className="flex gap-2">
-                  <input
-                    type="number"
-                    autoFocus
-                    required
-                    placeholder="Nhập kết quả..."
-                    value={userAnswer}
-                    onChange={(e) => setUserAnswer(e.target.value)}
-                    className="flex-1 px-4 py-3 rounded-xl bg-slate-800 border border-slate-700 font-bold text-center text-lg text-white outline-none focus:ring-2 focus:ring-purple-500"
-                  />
-                  <button
-                    type="submit"
-                    className="px-6 py-3 bg-purple-600 hover:bg-purple-700 font-extrabold text-sm rounded-xl transition shadow-lg"
-                  >
-                    Trả Lời
-                  </button>
-                </form>
+                {/* 4 Multi Choice Answer Buttons */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+                  {currentQuestions[gameQuestionIndex].options.map((opt, idx) => {
+                    const isSelected = selectedOption === opt
+                    const isCorrect = opt === currentQuestions[gameQuestionIndex].answer
+                    let btnColor = 'bg-slate-800 hover:bg-purple-600/80 border-slate-700 text-white'
+
+                    if (selectedOption !== null) {
+                      if (isCorrect) btnColor = 'bg-emerald-600 border-emerald-500 text-white font-black scale-105'
+                      else if (isSelected) btnColor = 'bg-rose-600 border-rose-500 text-white'
+                    }
+
+                    return (
+                      <button
+                        key={idx}
+                        disabled={selectedOption !== null}
+                        onClick={() => handleSelectOption(opt)}
+                        className={`p-3.5 rounded-xl border text-sm font-bold transition flex items-center justify-between shadow-md ${btnColor}`}
+                      >
+                        <span className="text-left">{opt}</span>
+                        {selectedOption !== null && isCorrect && <Check className="w-4 h-4 text-white" />}
+                        {selectedOption !== null && isSelected && !isCorrect && <X className="w-4 h-4 text-white" />}
+                      </button>
+                    )
+                  })}
+                </div>
 
                 {gameFeedback && (
-                  <div className="p-3 bg-purple-950 text-purple-200 rounded-xl text-sm font-bold animate-bounce">
+                  <div className="p-3 bg-purple-950 text-purple-200 rounded-xl text-sm font-bold animate-bounce mt-2">
                     {gameFeedback}
                   </div>
                 )}
