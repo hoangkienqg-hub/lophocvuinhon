@@ -4,6 +4,21 @@ import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../context/AuthContext'
 import { Sparkles, Loader2 } from 'lucide-react'
 
+// DANH SÁCH MÔN HỌC CHUẨN DÀNH RIÊNG CHO KHỐI TIỂU HỌC (LỚP 1 - LỚP 5)
+const PRIMARY_SCHOOL_SUBJECTS = [
+  'Toán Học',
+  'Tiếng Việt',
+  'Tiếng Anh',
+  'Tự Nhiên & Xã Hội (Lớp 1, 2, 3)',
+  'Khoa Học (Lớp 4, 5)',
+  'Lịch Sử & Địa Lý (Lớp 4, 5)',
+  'Tin Học & Công Nghệ',
+  'Đạo Đức',
+  'Mỹ Thuật & Âm Nhạc',
+  'Hoạt Động Trải Nghiệm',
+  'Tổng Hợp',
+]
+
 const CreateClassModal = ({ isOpen, onClose, onCreated }) => {
   const { user } = useAuth()
   const [name, setName] = useState('')
@@ -61,7 +76,7 @@ const CreateClassModal = ({ isOpen, onClose, onCreated }) => {
   }
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Tạo Lớp Học Mới">
+    <Modal isOpen={isOpen} onClose={onClose} title="Tạo Lớp Học Mới (Khối Tiểu Học Lớp 1 - 5)">
       <form onSubmit={handleSubmit} className="space-y-4">
         {error && (
           <div className="p-3 bg-red-50 text-red-600 rounded-xl text-sm border border-red-200">
@@ -76,31 +91,27 @@ const CreateClassModal = ({ isOpen, onClose, onCreated }) => {
           <input
             type="text"
             required
-            placeholder="Ví dụ: Lớp 10A1 - Chuyên Toán"
+            placeholder="Ví dụ: LỚP 5B"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 focus:ring-2 focus:ring-brand-500 outline-none transition"
+            className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 focus:ring-2 focus:ring-brand-500 outline-none transition font-medium"
           />
         </div>
 
         <div>
           <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-1">
-            Môn Học *
+            Môn Học Chương Trình Tiểu Học *
           </label>
           <select
             value={subject}
             onChange={(e) => setSubject(e.target.value)}
-            className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 focus:ring-2 focus:ring-brand-500 outline-none transition"
+            className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 focus:ring-2 focus:ring-brand-500 outline-none transition font-medium text-slate-800 dark:text-slate-100"
           >
-            <option value="Toán Học">Toán Học</option>
-            <option value="Vật Lý">Vật Lý</option>
-            <option value="Hóa Học">Hóa Học</option>
-            <option value="Ngoại Ngữ (Tiếng Anh)">Ngoại Ngữ (Tiếng Anh)</option>
-            <option value="Ngữ Văn">Ngữ Văn</option>
-            <option value="Sinh Học">Sinh Học</option>
-            <option value="Lịch Sử & Địa Lý">Lịch Sử & Địa Lý</option>
-            <option value="Tin Học">Tin Học</option>
-            <option value="Tổng Hợp">Tổng Hợp</option>
+            {PRIMARY_SCHOOL_SUBJECTS.map((s) => (
+              <option key={s} value={s}>
+                {s}
+              </option>
+            ))}
           </select>
         </div>
 
@@ -110,20 +121,20 @@ const CreateClassModal = ({ isOpen, onClose, onCreated }) => {
           </label>
           <textarea
             rows={3}
-            placeholder="Nội dung, mục tiêu hoặc ghi chú của lớp..."
+            placeholder="Nội dung, mục tiêu hoặc ghi chú của lớp học tiểu học..."
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 focus:ring-2 focus:ring-brand-500 outline-none transition"
+            className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 focus:ring-2 focus:ring-brand-500 outline-none transition text-sm"
           />
         </div>
 
-        <div className="pt-3 flex justify-end gap-3">
+        <div className="pt-2 flex justify-end gap-3">
           <button
             type="button"
             onClick={onClose}
             className="px-4 py-2.5 text-sm font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-xl transition"
           >
-            Hủy Bỏ
+            Hủy
           </button>
           <button
             type="submit"
@@ -131,7 +142,7 @@ const CreateClassModal = ({ isOpen, onClose, onCreated }) => {
             className="inline-flex items-center gap-2 px-5 py-2.5 bg-brand-600 hover:bg-brand-700 disabled:opacity-50 text-white font-semibold text-sm rounded-xl shadow-md transition"
           >
             {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
-            Tạo Lớp Ngay
+            Tạo Lớp Học
           </button>
         </div>
       </form>
