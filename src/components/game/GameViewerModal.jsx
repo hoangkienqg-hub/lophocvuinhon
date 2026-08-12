@@ -43,7 +43,7 @@ const GameViewerModal = ({ isOpen, onClose, material, assignmentId, onComplete }
   const [color, setColor] = useState('#ef4444') // Red default
   const [strokeWidth, setStrokeWidth] = useState(4)
 
-  // Single continuous annotations array for full document
+  // Continuous annotations array for full document
   const [annotations, setAnnotations] = useState([])
   const [history, setHistory] = useState([])
   const [historyIndex, setHistoryIndex] = useState(-1)
@@ -72,10 +72,12 @@ const GameViewerModal = ({ isOpen, onClose, material, assignmentId, onComplete }
     if (isOpen) {
       setSeconds(0)
       
-      // Auto-scroll to top so Header ("Họ và tên...") is always visible
-      if (scrollContainerRef.current) {
-        scrollContainerRef.current.scrollTop = 0
-      }
+      // Auto-scroll to top so Header & Title is ALWAYS visible at the top
+      setTimeout(() => {
+        if (scrollContainerRef.current) {
+          scrollContainerRef.current.scrollTop = 0
+        }
+      }, 100)
 
       interval = setInterval(() => {
         setSeconds((prev) => prev + 1)
@@ -102,12 +104,10 @@ const GameViewerModal = ({ isOpen, onClose, material, assignmentId, onComplete }
       if (data) {
         setSubmissionId(data.id)
         setSubmissionStatus(data.status || 'in_progress')
-        // Load annotations data (supports array or legacy object)
         const annData = data.annotations_data
         if (Array.isArray(annData)) {
           setAnnotations(annData)
         } else if (annData && typeof annData === 'object') {
-          // Merge page_1, page_2 into continuous list
           const combined = []
           Object.values(annData).forEach((pageShapes) => {
             if (Array.isArray(pageShapes)) combined.push(...pageShapes)
@@ -399,7 +399,7 @@ const GameViewerModal = ({ isOpen, onClose, material, assignmentId, onComplete }
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={material.title} maxWidth="max-w-6xl">
-      <div className="flex flex-col h-[84vh] bg-slate-900 rounded-2xl overflow-hidden text-slate-100 select-none shadow-2xl relative border border-slate-800">
+      <div className="flex flex-col h-[85vh] bg-slate-900 rounded-2xl overflow-hidden text-slate-100 select-none shadow-2xl relative border border-slate-800">
         {/* TOOLBAR TOP BAR */}
         <div className="p-3 bg-slate-950 border-b border-slate-800 flex flex-wrap items-center justify-between gap-3 shrink-0">
           {/* Tools */}
@@ -537,16 +537,16 @@ const GameViewerModal = ({ isOpen, onClose, material, assignmentId, onComplete }
           </div>
         </div>
 
-        {/* FULL CONTINUOUS DOCUMENT CANVAS CONTAINER */}
+        {/* FULL CONTINUOUS DOCUMENT CANVAS CONTAINER WITH EXPANDED HEIGHT */}
         <div
           ref={scrollContainerRef}
-          className="flex-1 overflow-y-auto bg-slate-950 flex flex-col items-center justify-start p-4 relative"
+          className="flex-1 overflow-y-auto bg-slate-950 flex flex-col items-center justify-start p-4 relative scroll-smooth"
         >
           <div
             className="relative bg-white shadow-2xl rounded-xl overflow-hidden my-2"
             style={{
-              width: `${860 * zoom}px`,
-              minHeight: `${2800 * zoom}px`, // Full length for 9 MCQs + Free Response Essay
+              width: `${880 * zoom}px`,
+              minHeight: `${4500 * zoom}px`, // Fully accommodates multi-page reading text, all MCQs & essay sections
             }}
           >
             {/* Background Full Document View */}
@@ -554,7 +554,7 @@ const GameViewerModal = ({ isOpen, onClose, material, assignmentId, onComplete }
               <iframe
                 src={viewerUrl}
                 title={material.title}
-                className="w-full h-full min-h-[2800px] border-0 pointer-events-none"
+                className="w-full h-full min-h-[4500px] border-0 pointer-events-none"
               />
             ) : (
               <div className="p-8 text-slate-800 font-sans text-center">
@@ -605,23 +605,36 @@ const GameViewerModal = ({ isOpen, onClose, material, assignmentId, onComplete }
         {/* FOOTER BAR */}
         <div className="p-3 bg-slate-950 border-t border-slate-800 flex items-center justify-between text-xs text-slate-400 shrink-0">
           <div className="flex items-center gap-2 font-bold text-slate-300">
-            <span>📜 Chế độ: <strong>Xem Cuộn Trọn Bộ Phiếu Bài Tập (Từ Đầu Đến Cuối)</strong></span>
+            <span>📜 Chế độ xem: <strong>Hiển Thị Đầy Đủ 100% Nội Dung Phiếu Bài Tập (Từ Đề Bài ➔ Trắc Nghiệm ➔ Tự Luận)</strong></span>
           </div>
 
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setZoom((z) => Math.max(0.7, z - 0.1))}
-              className="px-2.5 py-1 bg-slate-900 hover:bg-slate-800 text-white rounded-lg border border-slate-800 font-bold"
-            >
-              - Zoom
-            </button>
-            <span className="font-mono text-xs font-bold text-slate-200">{Math.round(zoom * 100)}%</span>
-            <button
-              onClick={() => setZoom((z) => Math.min(1.8, z + 0.1))}
-              className="px-2.5 py-1 bg-slate-900 hover:bg-slate-800 text-white rounded-lg border border-slate-800 font-bold"
-            >
-              + Zoom
-            </button>
+          <div className="flex items-center gap-3">
+            {fileUrl && (
+              <a
+                href={fileUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-1 px-3 py-1 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-lg border border-slate-700 transition"
+              >
+                <ExternalLink className="w-3.5 h-3.5" /> Mở File Gốc Để In / Tải
+              </a>
+            )}
+
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => setZoom((z) => Math.max(0.7, z - 0.1))}
+                className="px-2.5 py-1 bg-slate-900 hover:bg-slate-800 text-white rounded-lg border border-slate-800 font-bold"
+              >
+                - Zoom
+              </button>
+              <span className="font-mono text-xs font-bold text-slate-200 px-1">{Math.round(zoom * 100)}%</span>
+              <button
+                onClick={() => setZoom((z) => Math.min(1.8, z + 0.1))}
+                className="px-2.5 py-1 bg-slate-900 hover:bg-slate-800 text-white rounded-lg border border-slate-800 font-bold"
+              >
+                + Zoom
+              </button>
+            </div>
           </div>
         </div>
 
@@ -671,4 +684,3 @@ const GameViewerModal = ({ isOpen, onClose, material, assignmentId, onComplete }
 }
 
 export default GameViewerModal
-
