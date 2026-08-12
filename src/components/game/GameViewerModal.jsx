@@ -20,7 +20,6 @@ import {
   Clock,
   Sparkles,
   HelpCircle,
-  Maximize2,
   ExternalLink,
 } from 'lucide-react'
 
@@ -208,6 +207,11 @@ const GameViewerModal = ({ isOpen, onClose, material, assignmentId, onComplete }
 
   const handlePointerDown = (e) => {
     if (submissionStatus === 'submitted' || submissionStatus === 'graded') return
+    // Prevent default native image/text drag ghosts
+    if (e.type === 'mousedown') {
+      e.preventDefault()
+    }
+    
     const pos = getCanvasCoords(e)
 
     if (tool === 'text') {
@@ -399,9 +403,9 @@ const GameViewerModal = ({ isOpen, onClose, material, assignmentId, onComplete }
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={material.title} maxWidth="max-w-6xl">
-      <div className="flex flex-col h-[85vh] bg-slate-900 rounded-2xl overflow-hidden text-slate-100 select-none shadow-2xl relative border border-slate-800">
+      <div className="flex flex-col h-[85vh] bg-slate-950 rounded-2xl overflow-hidden text-slate-100 select-none shadow-2xl relative border border-slate-800">
         {/* TOOLBAR TOP BAR */}
-        <div className="p-3 bg-slate-950 border-b border-slate-800 flex flex-wrap items-center justify-between gap-3 shrink-0">
+        <div className="p-3 bg-slate-950 border-b border-slate-800 flex flex-wrap items-center justify-between gap-3 shrink-0 z-20">
           {/* Tools */}
           {submissionStatus !== 'submitted' && submissionStatus !== 'graded' && (
             <div className="flex flex-wrap items-center gap-1.5 bg-slate-900 p-1.5 rounded-2xl border border-slate-800">
@@ -537,33 +541,33 @@ const GameViewerModal = ({ isOpen, onClose, material, assignmentId, onComplete }
           </div>
         </div>
 
-        {/* FULL CONTINUOUS DOCUMENT CANVAS CONTAINER WITH EXPANDED HEIGHT */}
+        {/* FULL SOLID WHITE PAPER SHEET CONTAINER (SOLID OPAQUE BG PREVENTS ALL GHOSTING) */}
         <div
           ref={scrollContainerRef}
           className="flex-1 overflow-y-auto bg-slate-950 flex flex-col items-center justify-start p-4 relative scroll-smooth"
         >
           <div
-            className="relative bg-white shadow-2xl rounded-xl overflow-hidden my-2"
+            className="relative bg-white opacity-100 shadow-2xl rounded-xl overflow-hidden my-2 border border-slate-300 select-none"
             style={{
               width: `${880 * zoom}px`,
-              minHeight: `${4500 * zoom}px`, // Fully accommodates multi-page reading text, all MCQs & essay sections
+              minHeight: `${4500 * zoom}px`,
             }}
           >
-            {/* Background Full Document View */}
+            {/* Background Full Document View (SOLID WHITE BASE PREVENTS OVERLAY GHOSTING) */}
             {fileUrl ? (
               <iframe
                 src={viewerUrl}
                 title={material.title}
-                className="w-full h-full min-h-[4500px] border-0 pointer-events-none"
+                className="w-full h-full min-h-[4500px] border-0 bg-white opacity-100 pointer-events-none"
               />
             ) : (
-              <div className="p-8 text-slate-800 font-sans text-center">
+              <div className="p-8 text-slate-800 font-sans text-center bg-white">
                 <h2 className="text-2xl font-bold">{material.title}</h2>
                 <p className="text-slate-500 text-sm mt-2">{material.description}</p>
               </div>
             )}
 
-            {/* Full Length Interactive Canvas Overlay */}
+            {/* Interactive Canvas Overlay (DRAG PREVENTED, ZERO SELECTION GHOSTING) */}
             <canvas
               ref={canvasRef}
               onMouseDown={handlePointerDown}
@@ -572,8 +576,9 @@ const GameViewerModal = ({ isOpen, onClose, material, assignmentId, onComplete }
               onTouchStart={handlePointerDown}
               onTouchMove={handlePointerMove}
               onTouchEnd={handlePointerUp}
-              className="absolute inset-0 w-full h-full cursor-crosshair z-10"
-              style={{ touchAction: 'none' }}
+              onDragStart={(e) => e.preventDefault()}
+              className="absolute inset-0 w-full h-full cursor-crosshair z-10 select-none"
+              style={{ touchAction: 'none', userSelect: 'none', WebkitUserSelect: 'none' }}
             />
 
             {/* Text Input Box */}
@@ -603,7 +608,7 @@ const GameViewerModal = ({ isOpen, onClose, material, assignmentId, onComplete }
         </div>
 
         {/* FOOTER BAR */}
-        <div className="p-3 bg-slate-950 border-t border-slate-800 flex items-center justify-between text-xs text-slate-400 shrink-0">
+        <div className="p-3 bg-slate-950 border-t border-slate-800 flex items-center justify-between text-xs text-slate-400 shrink-0 z-20">
           <div className="flex items-center gap-2 font-bold text-slate-300">
             <span>📜 Chế độ xem: <strong>Hiển Thị Đầy Đủ 100% Nội Dung Phiếu Bài Tập (Từ Đề Bài ➔ Trắc Nghiệm ➔ Tự Luận)</strong></span>
           </div>
