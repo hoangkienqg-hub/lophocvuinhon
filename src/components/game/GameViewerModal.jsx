@@ -14,8 +14,6 @@ import {
   Redo2,
   ZoomIn,
   ZoomOut,
-  ChevronLeft,
-  ChevronRight,
   Save,
   Send,
   CheckCircle2,
@@ -38,18 +36,15 @@ const GameViewerModal = ({ isOpen, onClose, material, assignmentId, onComplete }
   const { user } = useAuth()
 
   // State
-  const [currentPage, setCurrentPage] = useState(1)
-  const [totalPages, setTotalPages] = useState(2) // Standard 2 pages for Primary Worksheets
   const [zoom, setZoom] = useState(1)
-  const [viewMode, setViewMode] = useState('fit') // 'fit' (Trọn trang) or 'full' (Cuộn toàn bộ)
 
   // Tools
   const [tool, setTool] = useState('circle') // 'circle', 'pen', 'highlighter', 'rectangle', 'line', 'text', 'eraser'
   const [color, setColor] = useState('#ef4444') // Red default
   const [strokeWidth, setStrokeWidth] = useState(4)
 
-  // Drawing Annotations per page
-  const [annotations, setAnnotations] = useState({})
+  // Single continuous annotations array for full document
+  const [annotations, setAnnotations] = useState([])
   const [history, setHistory] = useState([])
   const [historyIndex, setHistoryIndex] = useState(-1)
 
@@ -72,14 +67,10 @@ const GameViewerModal = ({ isOpen, onClose, material, assignmentId, onComplete }
   const isDrawing = useRef(false)
   const currentShape = useRef(null)
 
-  const pageKey = `page_${currentPage}`
-
   useEffect(() => {
     let interval = null
     if (isOpen) {
       setSeconds(0)
-      setCurrentPage(1)
-      setTotalPages(2)
       
       // Auto-scroll to top so Header ("Họ và tên...") is always visible
       if (scrollContainerRef.current) {
@@ -111,7 +102,18 @@ const GameViewerModal = ({ isOpen, onClose, material, assignmentId, onComplete }
       if (data) {
         setSubmissionId(data.id)
         setSubmissionStatus(data.status || 'in_progress')
-        setAnnotations(data.annotations_data || {})
+        // Load annotations data (supports array or legacy object)
+        const annData = data.annotations_data
+        if (Array.isArray(annData)) {
+          setAnnotations(annData)
+        } else if (annData && typeof annData === 'object') {
+          // Merge page_1, page_2 into continuous list
+          const combined = []
+          Object.values(annData).forEach((pageShapes) => {
+            if (Array.isArray(pageShapes)) combined.push(...pageShapes)
+          })
+          setAnnotations(combined)
+        }
         if (data.saved_at) {
           setLastSavedTime(new Date(data.saved_at).toLocaleTimeString('vi-VN'))
         }
@@ -123,7 +125,7 @@ const GameViewerModal = ({ isOpen, onClose, material, assignmentId, onComplete }
 
   useEffect(() => {
     redrawCanvas()
-  }, [currentPage, annotations, zoom, isOpen, viewMode])
+  }, [annotations, zoom, isOpen])
 
   const redrawCanvas = () => {
     const canvas = canvasRef.current
@@ -135,9 +137,7 @@ const GameViewerModal = ({ isOpen, onClose, material, assignmentId, onComplete }
     canvas.height = rect.height
 
     ctx.clearRect(0, 0, canvas.width, canvas.height)
-
-    const pageShapes = annotations[pageKey] || []
-    pageShapes.forEach((shape) => drawShapeOnContext(ctx, shape, canvas.width, canvas.height))
+    annotations.forEach((shape) => drawShapeOnContext(ctx, shape, canvas.width, canvas.height))
   }
 
   const drawShapeOnContext = (ctx, shape, w, h) => {
@@ -251,31 +251,27 @@ const GameViewerModal = ({ isOpen, onClose, material, assignmentId, onComplete }
     if (!isDrawing.current || !currentShape.current) return
     isDrawing.current = false
 
-    const pageShapes = annotations[pageKey] || []
-    const updatedShapes = [...pageShapes, currentShape.current]
-    const newAnnotations = { ...annotations, [pageKey]: updatedShapes }
+    const updatedShapes = [...annotations, currentShape.current]
 
-    setAnnotations(newAnnotations)
-    saveHistory(newAnnotations)
-    autoSave(newAnnotations)
+    setAnnotations(updatedShapes)
+    saveHistory(updatedShapes)
+    autoSave(updatedShapes)
     currentShape.current = null
   }
 
   const eraseAtPoint = (pos) => {
-    const pageShapes = annotations[pageKey] || []
-    const filtered = pageShapes.filter((shape) => {
+    const filtered = annotations.filter((shape) => {
       if (shape.tool === 'circle' || shape.tool === 'rectangle') {
         const cx = shape.x + shape.w / 2
         const cy = shape.y + shape.h / 2
-        return Math.hypot(pos.x - cx, pos.y - cy) > 0.08
+        return Math.hypot(pos.x - cx, pos.y - cy) > 0.05
       }
       return true
     })
 
-    const newAnnotations = { ...annotations, [pageKey]: filtered }
-    setAnnotations(newAnnotations)
-    saveHistory(newAnnotations)
-    autoSave(newAnnotations)
+    setAnnotations(filtered)
+    saveHistory(filtered)
+    autoSave(filtered)
   }
 
   const handleAddText = () => {
@@ -293,11 +289,10 @@ const GameViewerModal = ({ isOpen, onClose, material, assignmentId, onComplete }
       text: textInputValue.trim(),
     }
 
-    const pageShapes = annotations[pageKey] || []
-    const newAnnotations = { ...annotations, [pageKey]: [...pageShapes, textShape] }
-    setAnnotations(newAnnotations)
-    saveHistory(newAnnotations)
-    autoSave(newAnnotations)
+    const updated = [...annotations, textShape]
+    setAnnotations(updated)
+    saveHistory(updated)
+    autoSave(updated)
     setTextInputPos(null)
     setTextInputValue('')
   }
@@ -400,12 +395,11 @@ const GameViewerModal = ({ isOpen, onClose, material, assignmentId, onComplete }
   const fileUrl = material.file_url || ''
   const formatTime = (sec) => `${Math.floor(sec / 60).toString().padStart(2, '0')}:${(sec % 60).toString().padStart(2, '0')}`
 
-  // Viewer iframe URL with page target
-  const viewerUrl = `https://docs.google.com/viewer?url=${encodeURIComponent(fileUrl)}&embedded=true#page=${currentPage}`
+  const viewerUrl = `https://docs.google.com/viewer?url=${encodeURIComponent(fileUrl)}&embedded=true`
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={material.title} maxWidth="max-w-6xl">
-      <div className="flex flex-col h-[82vh] bg-slate-900 rounded-2xl overflow-hidden text-slate-100 select-none shadow-2xl relative border border-slate-800">
+      <div className="flex flex-col h-[84vh] bg-slate-900 rounded-2xl overflow-hidden text-slate-100 select-none shadow-2xl relative border border-slate-800">
         {/* TOOLBAR TOP BAR */}
         <div className="p-3 bg-slate-950 border-b border-slate-800 flex flex-wrap items-center justify-between gap-3 shrink-0">
           {/* Tools */}
@@ -543,25 +537,24 @@ const GameViewerModal = ({ isOpen, onClose, material, assignmentId, onComplete }
           </div>
         </div>
 
-        {/* DOCUMENT CANVAS CONTAINER */}
+        {/* FULL CONTINUOUS DOCUMENT CANVAS CONTAINER */}
         <div
           ref={scrollContainerRef}
           className="flex-1 overflow-y-auto bg-slate-950 flex flex-col items-center justify-start p-4 relative"
         >
           <div
-            className="relative bg-white shadow-2xl rounded-xl overflow-hidden my-auto"
+            className="relative bg-white shadow-2xl rounded-xl overflow-hidden my-2"
             style={{
-              width: `${820 * zoom}px`,
-              height: viewMode === 'fit' ? `${1150 * zoom}px` : `${2300 * zoom}px`,
+              width: `${860 * zoom}px`,
+              minHeight: `${2800 * zoom}px`, // Full length for 9 MCQs + Free Response Essay
             }}
           >
-            {/* Background Document View */}
+            {/* Background Full Document View */}
             {fileUrl ? (
               <iframe
-                key={`iframe_p${currentPage}_v${viewMode}`}
                 src={viewerUrl}
                 title={material.title}
-                className="w-full h-full border-0 pointer-events-none"
+                className="w-full h-full min-h-[2800px] border-0 pointer-events-none"
               />
             ) : (
               <div className="p-8 text-slate-800 font-sans text-center">
@@ -570,7 +563,7 @@ const GameViewerModal = ({ isOpen, onClose, material, assignmentId, onComplete }
               </div>
             )}
 
-            {/* Interactive Canvas Overlay */}
+            {/* Full Length Interactive Canvas Overlay */}
             <canvas
               ref={canvasRef}
               onMouseDown={handlePointerDown}
@@ -592,11 +585,11 @@ const GameViewerModal = ({ isOpen, onClose, material, assignmentId, onComplete }
                 <input
                   type="text"
                   autoFocus
-                  placeholder="Gõ đáp án..."
+                  placeholder="Gõ lời giải hoặc ghi chú..."
                   value={textInputValue}
                   onChange={(e) => setTextInputValue(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handleAddText()}
-                  className="px-3 py-1.5 text-xs text-white bg-slate-800 rounded-lg outline-none border border-slate-700 w-44 font-bold"
+                  className="px-3 py-1.5 text-xs text-white bg-slate-800 rounded-lg outline-none border border-slate-700 w-52 font-bold"
                 />
                 <button
                   onClick={handleAddText}
@@ -609,47 +602,25 @@ const GameViewerModal = ({ isOpen, onClose, material, assignmentId, onComplete }
           </div>
         </div>
 
-        {/* FOOTER */}
+        {/* FOOTER BAR */}
         <div className="p-3 bg-slate-950 border-t border-slate-800 flex items-center justify-between text-xs text-slate-400 shrink-0">
-          <div className="flex items-center gap-2">
-            <span>Chế độ xem:</span>
-            <button
-              onClick={() => setViewMode((m) => (m === 'fit' ? 'full' : 'fit'))}
-              className="px-2.5 py-1 bg-slate-900 hover:bg-slate-800 text-white rounded-lg border border-slate-800 font-bold"
-            >
-              {viewMode === 'fit' ? '📄 Xem Trọn Trang' : '📜 Xem Cuộn Tất Cả'}
-            </button>
+          <div className="flex items-center gap-2 font-bold text-slate-300">
+            <span>📜 Chế độ: <strong>Xem Cuộn Trọn Bộ Phiếu Bài Tập (Từ Đầu Đến Cuối)</strong></span>
           </div>
 
           <div className="flex items-center gap-2">
             <button
-              onClick={() => {
-                if (currentPage > 1) {
-                  setCurrentPage(currentPage - 1)
-                  if (scrollContainerRef.current) scrollContainerRef.current.scrollTop = 0
-                }
-              }}
-              disabled={currentPage === 1}
-              className="p-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-lg disabled:opacity-40"
-              title="Trang trước"
+              onClick={() => setZoom((z) => Math.max(0.7, z - 0.1))}
+              className="px-2.5 py-1 bg-slate-900 hover:bg-slate-800 text-white rounded-lg border border-slate-800 font-bold"
             >
-              <ChevronLeft className="w-4 h-4" />
+              - Zoom
             </button>
-            <span className="font-mono text-xs font-bold text-slate-300">
-              Trang {currentPage} / {totalPages}
-            </span>
+            <span className="font-mono text-xs font-bold text-slate-200">{Math.round(zoom * 100)}%</span>
             <button
-              onClick={() => {
-                if (currentPage < totalPages) {
-                  setCurrentPage(currentPage + 1)
-                  if (scrollContainerRef.current) scrollContainerRef.current.scrollTop = 0
-                }
-              }}
-              disabled={currentPage >= totalPages}
-              className="p-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-lg disabled:opacity-40"
-              title="Trang sau"
+              onClick={() => setZoom((z) => Math.min(1.8, z + 0.1))}
+              className="px-2.5 py-1 bg-slate-900 hover:bg-slate-800 text-white rounded-lg border border-slate-800 font-bold"
             >
-              <ChevronRight className="w-4 h-4" />
+              + Zoom
             </button>
           </div>
         </div>
