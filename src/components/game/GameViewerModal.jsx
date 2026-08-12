@@ -4,6 +4,37 @@ import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../context/AuthContext'
 import { Trophy, Clock, CheckCircle2, Loader2, Maximize2, ExternalLink } from 'lucide-react'
 
+const isOfficeFile = (url) => {
+  if (!url) return false
+  const lower = url.toLowerCase().split('?')[0]
+  return (
+    lower.endsWith('.doc') ||
+    lower.endsWith('.docx') ||
+    lower.endsWith('.ppt') ||
+    lower.endsWith('.pptx') ||
+    lower.endsWith('.xls') ||
+    lower.endsWith('.xlsx')
+  )
+}
+
+const isImageFile = (url) => {
+  if (!url) return false
+  const lower = url.toLowerCase().split('?')[0]
+  return (
+    lower.endsWith('.png') ||
+    lower.endsWith('.jpg') ||
+    lower.endsWith('.jpeg') ||
+    lower.endsWith('.gif') ||
+    lower.endsWith('.webp')
+  )
+}
+
+const isPdfFile = (url) => {
+  if (!url) return false
+  const lower = url.toLowerCase().split('?')[0]
+  return lower.endsWith('.pdf')
+}
+
 const GameViewerModal = ({ isOpen, onClose, material, assignmentId, onComplete }) => {
   const { user } = useAuth()
   const [seconds, setSeconds] = useState(0)
@@ -68,6 +99,8 @@ const GameViewerModal = ({ isOpen, onClose, material, assignmentId, onComplete }
 
   if (!material) return null
 
+  const fileUrl = material.file_url || ''
+
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={material.title} maxWidth="max-w-5xl">
       <div className="space-y-4">
@@ -84,15 +117,15 @@ const GameViewerModal = ({ isOpen, onClose, material, assignmentId, onComplete }
           </div>
 
           <div className="flex items-center gap-3">
-            {material.file_url && (
+            {fileUrl && (
               <a
-                href={material.file_url}
+                href={fileUrl}
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex items-center gap-1 text-xs font-bold text-slate-500 hover:text-brand-600 px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700"
+                className="inline-flex items-center gap-1 text-xs font-bold text-slate-500 hover:text-brand-600 px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800"
               >
                 <ExternalLink className="w-3.5 h-3.5" />
-                Mở Cửa Sổ Mới
+                Mở Cửa Sổ Mới / Tải Về
               </a>
             )}
 
@@ -129,44 +162,40 @@ const GameViewerModal = ({ isOpen, onClose, material, assignmentId, onComplete }
           </div>
         )}
 
-        {/* Main Content Viewer (Embed iFrame / Video / HTML5) */}
-        <div className="w-full h-[65vh] bg-black rounded-2xl overflow-hidden shadow-inner border border-slate-800 flex items-center justify-center relative">
-          {material.type === 'game_iframe' ? (
+        {/* Main Content Viewer (Embed iFrame / Video / HTML5 / Word / PDF / Image) */}
+        <div className="w-full h-[68vh] bg-slate-900 rounded-2xl overflow-hidden shadow-inner border border-slate-800 flex items-center justify-center relative">
+          {material.type === 'game_iframe' || material.type === 'game_html5' ? (
             <iframe
-              src={material.file_url}
+              src={fileUrl}
               title={material.title}
-              className="w-full h-full border-0"
+              className="w-full h-full border-0 bg-white"
               allow="fullscreen; autoplay"
             />
           ) : material.type === 'video' ? (
-            <video src={material.file_url} controls className="w-full h-full object-contain" />
-          ) : material.type === 'game_html5' ? (
+            <video src={fileUrl} controls className="w-full h-full object-contain bg-black" />
+          ) : isPdfFile(fileUrl) ? (
+            <iframe src={fileUrl} title={material.title} className="w-full h-full border-0 bg-white" />
+          ) : isOfficeFile(fileUrl) ? (
             <iframe
-              src={material.file_url}
+              src={`https://docs.google.com/viewer?url=${encodeURIComponent(fileUrl)}&embedded=true`}
               title={material.title}
-              className="w-full h-full border-0"
-              allow="fullscreen; autoplay"
+              className="w-full h-full border-0 bg-white"
             />
-          ) : material.file_url?.endsWith('.pdf') ? (
-            <iframe src={material.file_url} title={material.title} className="w-full h-full border-0" />
+          ) : isImageFile(fileUrl) ? (
+            <img src={fileUrl} alt={material.title} className="max-w-full max-h-full object-contain" />
+          ) : fileUrl ? (
+            <iframe
+              src={`https://docs.google.com/viewer?url=${encodeURIComponent(fileUrl)}&embedded=true`}
+              title={material.title}
+              className="w-full h-full border-0 bg-white"
+            />
           ) : (
             <div className="text-center p-8 text-white space-y-4">
               <div className="w-16 h-16 bg-slate-800 rounded-2xl flex items-center justify-center mx-auto text-3xl">
                 📄
               </div>
               <h4 className="font-bold text-lg">{material.title}</h4>
-              <p className="text-slate-400 text-sm max-w-md mx-auto">{material.description}</p>
-              {material.file_url && (
-                <a
-                  href={material.file_url}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="inline-flex items-center gap-2 px-6 py-2.5 bg-brand-600 text-white rounded-xl font-bold text-sm"
-                >
-                  <Maximize2 className="w-4 h-4" />
-                  Xem / Tải Tài Liệu
-                </a>
-              )}
+              <p className="text-slate-400 text-sm max-w-md mx-auto">{material.description || 'Chưa có file nào được đính kèm.'}</p>
             </div>
           )}
         </div>
