@@ -5,48 +5,66 @@ import {
   LayoutDashboard,
   Users,
   BookOpen,
+  FileText,
   Gamepad2,
   TrendingUp,
+  Award,
   ShieldCheck,
 } from 'lucide-react'
 
 const Sidebar = () => {
-  const { role, user } = useAuth()
-  const isAdmin = role === 'admin' || user?.email === 'hoangkienqg@gmail.com'
+  const { role, user, isTeacher, isAdmin } = useAuth()
 
   const navItems = [
     {
       to: '/',
       label: 'Tổng Quan',
       icon: LayoutDashboard,
-      roles: ['admin', 'teacher', 'student'],
     },
     {
       to: '/classes',
       label: 'Quản Lý Lớp Học',
       icon: Users,
-      roles: ['admin', 'teacher', 'student'],
     },
+  ]
+
+  if (isTeacher || isAdmin) {
+    navItems.push({
+      to: '/subjects',
+      label: 'Quản Lý Môn Học',
+      icon: BookOpen,
+    })
+  }
+
+  // TÁCH THÀNH 4 MỤC RIÊNG BIỆT CHUẨN XÁC
+  navItems.push(
     {
       to: '/materials',
-      label: 'Học Liệu & Game',
+      label: 'Kho Học Liệu',
+      icon: FileText,
+    },
+    {
+      to: '/games',
+      label: 'Kho Game Giáo Dục',
       icon: Gamepad2,
-      roles: ['admin', 'teacher', 'student'],
     },
     {
       to: '/progress',
-      label: 'Tiến Độ & Bảng Điểm',
+      label: 'Tiến Độ Học Tập',
       icon: TrendingUp,
-      roles: ['admin', 'teacher', 'student'],
     },
-  ]
+    {
+      to: '/grades',
+      label: 'Bảng Điểm Lớp Học',
+      icon: Award,
+    }
+  )
 
   if (isAdmin) {
     navItems.push({
       to: '/admin',
       label: 'Quản Trị Hệ Thống',
       icon: ShieldCheck,
-      roles: ['admin'],
     })
   }
 
