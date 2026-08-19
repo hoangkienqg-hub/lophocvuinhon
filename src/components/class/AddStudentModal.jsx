@@ -161,7 +161,7 @@ const AddStudentModal = ({ isOpen, onClose, classId, onStudentsAdded }) => {
           </label>
           <textarea
             rows={6}
-            placeholder={`Ngô Thanh Toàn\nChu Văn Trung\nNgụ Minh Tuấn\nLê Xuân Tùng\nTrần Thị Hà Vy`}
+            placeholder={`Lê Mai Linh Đan\nPhạm Quang Đạt\nNguyễn Đình Đồng\nTrần Trọng Đức\nChu Gia Huy\nNguyễn Quốc Khánh`}
             value={studentsText}
             onChange={(e) => setStudentsText(e.target.value)}
             className="w-full px-4 py-2.5 font-sans text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 focus:ring-2 focus:ring-brand-500 outline-none transition leading-relaxed"
