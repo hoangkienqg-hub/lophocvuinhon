@@ -3,68 +3,80 @@ import { useAuth } from '../context/AuthContext'
 import { supabase } from '../lib/supabase'
 import LoadingSpinner from '../components/common/LoadingSpinner'
 import EmptyState from '../components/common/EmptyState'
-import { TrendingUp, Trophy, Clock, CheckCircle2, Award, BookOpen } from 'lucide-react'
+import { TrendingUp, Trophy, Clock, CheckCircle2, Award, BookOpen, MessageSquare, Eye } from 'lucide-react'
 
-const StudentProgressPage = () => {
+const StudentProgressPage = ({ defaultTab = 'progress' }) => {
   const { user, role, isTeacher, isStudent } = useAuth()
-  const [progressList, setProgressList] = useState([])
+  const [submissionsList, setSubmissionsList] = useState([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    fetchProgress()
+    fetchSubmissions()
   }, [user, role])
 
-  const fetchProgress = async () => {
+  const fetchSubmissions = async () => {
     setLoading(true)
     try {
       if (isStudent) {
-        // Fetch personal student progress
+        // Fetch personal student interactive submissions
         const { data, error } = await supabase
-          .from('student_progress')
+          .from('submissions')
           .select('*, assignments(*, materials(*), classes(*))')
           .eq('student_id', user.id)
-          .order('completed_at', { ascending: false })
+          .order('updated_at', { ascending: false })
 
-        if (error) throw error
-        setProgressList(data || [])
+        if (error && error.code !== '42P01') throw error
+        setSubmissionsList(data || [])
       } else {
-        // Fetch all student progress for teacher's classes
+        // Fetch all student submissions for teacher
         const { data, error } = await supabase
-          .from('student_progress')
+          .from('submissions')
           .select('*, profiles:student_id(full_name, email), assignments(*, materials(*), classes(*))')
-          .order('completed_at', { ascending: false })
+          .order('updated_at', { ascending: false })
 
-        if (error) throw error
-        setProgressList(data || [])
+        if (error && error.code !== '42P01') throw error
+        setSubmissionsList(data || [])
       }
     } catch (err) {
-      console.error('Error fetching progress:', err)
+      console.error('Error fetching submissions:', err)
     } finally {
       setLoading(false)
     }
   }
 
-  const completedCount = progressList.filter((p) => p.status === 'completed').length
+  const completedCount = submissionsList.filter((p) => p.status === 'submitted' || p.status === 'graded').length
+  const gradedList = submissionsList.filter((p) => p.score !== null && p.score !== undefined)
   const avgScore =
-    progressList.length > 0
+    gradedList.length > 0
       ? (
-          progressList.reduce((acc, curr) => acc + (Number(curr.score) || 0), 0) /
-          progressList.length
+          gradedList.reduce((acc, curr) => acc + Number(curr.score), 0) /
+          gradedList.length
         ).toFixed(1)
       : 0
+
+  const isGradesTab = defaultTab === 'grades'
 
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div>
+      <div className="glass-panel p-6 rounded-3xl border border-slate-200/80 dark:border-slate-800">
         <h2 className="text-2xl font-extrabold text-slate-800 dark:text-white flex items-center gap-2">
-          <TrendingUp className="w-7 h-7 text-emerald-600" />
-          {isStudent ? 'Bảng Thành Tích Cá Nhân' : 'Báo Cáo & Tiến Độ Học Sinh'}
+          {isGradesTab ? (
+            <>
+              <Trophy className="w-7 h-7 text-amber-500 animate-bounce" />
+              Bảng Điểm & Bảng Xếp Hạng Lớp Học
+            </>
+          ) : (
+            <>
+              <TrendingUp className="w-7 h-7 text-emerald-600" />
+              {isStudent ? 'Tiến Độ Học Tập Cá Nhân' : 'Theo Dõi Tiến Độ Học Sinh'}
+            </>
+          )}
         </h2>
-        <p className="text-sm text-slate-500">
-          {isStudent
-            ? 'Theo dõi kết quả học tập và lịch sử hoàn thành bài chơi của bạn'
-            : 'Tổng hợp điểm số và thời gian hoàn thành bài tập của học sinh'}
+        <p className="text-sm text-slate-500 mt-1">
+          {isGradesTab
+            ? 'Tổng hợp điểm số chi tiết, bảng xếp hạng thi đua và nhận xét từ giáo viên.'
+            : 'Thống kê tỷ lệ nộp bài, thời gian làm bài và mức độ hoàn thành bài tập.'}
         </p>
       </div>
 
@@ -75,7 +87,7 @@ const StudentProgressPage = () => {
             <CheckCircle2 className="w-6 h-6" />
           </div>
           <div>
-            <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Đã Hoàn Thành</p>
+            <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Đã Hoàn Thành / Nộp Bài</p>
             <h3 className="text-2xl font-extrabold text-slate-800 dark:text-white">{completedCount} bài</h3>
           </div>
         </div>
@@ -103,14 +115,14 @@ const StudentProgressPage = () => {
         </div>
       </div>
 
-      {/* Progress Table */}
+      {/* Progress / Grades Table */}
       {loading ? (
-        <LoadingSpinner label="Đang tải dữ liệu tiến độ..." />
-      ) : progressList.length === 0 ? (
+        <LoadingSpinner label="Đang tải dữ liệu tiến độ & điểm số..." />
+      ) : submissionsList.length === 0 ? (
         <EmptyState
-          icon={TrendingUp}
-          title="Chưa có dữ liệu tiến độ"
-          description="Chưa có kết quả học tập nào được ghi nhận."
+          icon={isGradesTab ? Trophy : TrendingUp}
+          title={isGradesTab ? 'Chưa Có Điểm Số' : 'Chưa Có Bài Nộp'}
+          description="Hiện tại chưa có bài tập nào được học sinh nộp hoặc được giáo viên chấm điểm."
         />
       ) : (
         <div className="glass-panel rounded-3xl overflow-hidden border border-slate-200/80 dark:border-slate-800 shadow-xs">
@@ -119,16 +131,16 @@ const StudentProgressPage = () => {
               <thead className="bg-slate-100 dark:bg-slate-800 text-slate-500 uppercase text-[11px] font-bold tracking-wider">
                 <tr>
                   {!isStudent && <th className="px-6 py-3.5">Học Sinh</th>}
-                  <th className="px-6 py-3.5">Tên Học Liệu / Game</th>
+                  <th className="px-6 py-3.5">Tên Bài Tập</th>
                   <th className="px-6 py-3.5">Lớp Học</th>
-                  <th className="px-6 py-3.5">Điểm Số</th>
-                  <th className="px-6 py-3.5">Thời Gian Chơi</th>
                   <th className="px-6 py-3.5">Trạng Thái</th>
-                  <th className="px-6 py-3.5">Thời Gian Nộp</th>
+                  <th className="px-6 py-3.5">Điểm Số</th>
+                  <th className="px-6 py-3.5">Nhận Xét Của Giáo Viên</th>
+                  <th className="px-6 py-3.5">Ngày Nộp</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                {progressList.map((item) => (
+                {submissionsList.map((item) => (
                   <tr key={item.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition">
                     {!isStudent && (
                       <td className="px-6 py-4 font-bold text-slate-800 dark:text-white">
@@ -136,25 +148,33 @@ const StudentProgressPage = () => {
                       </td>
                     )}
                     <td className="px-6 py-4 font-bold text-slate-800 dark:text-white">
-                      {item.assignments?.materials?.title || 'Game Tương Tác'}
+                      {item.assignments?.materials?.title || 'Bài Tập Trực Tiếp'}
                     </td>
                     <td className="px-6 py-4 text-xs font-semibold text-slate-500">
-                      {item.assignments?.classes?.name || 'N/A'}
-                    </td>
-                    <td className="px-6 py-4 font-bold text-emerald-600 dark:text-emerald-400">
-                      {item.score} điểm
-                    </td>
-                    <td className="px-6 py-4 font-mono text-xs text-slate-500">
-                      {item.completion_time_seconds ? `${item.completion_time_seconds} giây` : 'N/A'}
+                      {item.assignments?.classes?.name || 'Lớp Học'}
                     </td>
                     <td className="px-6 py-4">
-                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300">
+                      <span
+                        className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-extrabold ${
+                          item.status === 'graded'
+                            ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300'
+                            : item.status === 'submitted'
+                            ? 'bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300'
+                            : 'bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300'
+                        }`}
+                      >
                         <CheckCircle2 className="w-3 h-3" />
-                        {item.status}
+                        {item.status === 'graded' ? 'Đã Chấm' : item.status === 'submitted' ? 'Đã Nộp' : 'Đang Làm'}
                       </span>
                     </td>
+                    <td className="px-6 py-4 font-extrabold text-base text-emerald-600 dark:text-emerald-400">
+                      {item.score !== null && item.score !== undefined ? `${item.score} / 100đ` : 'Chưa chấm'}
+                    </td>
+                    <td className="px-6 py-4 text-xs text-slate-600 dark:text-slate-300 italic max-w-xs">
+                      {item.teacher_feedback ? `"${item.teacher_feedback}"` : '—'}
+                    </td>
                     <td className="px-6 py-4 text-xs font-mono text-slate-400">
-                      {item.completed_at ? new Date(item.completed_at).toLocaleString('vi-VN') : '—'}
+                      {item.submitted_at ? new Date(item.submitted_at).toLocaleString('vi-VN') : '—'}
                     </td>
                   </tr>
                 ))}
