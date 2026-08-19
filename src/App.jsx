@@ -10,10 +10,19 @@ import AuthPage from './pages/AuthPage'
 import DashboardPage from './pages/DashboardPage'
 import ClassesPage from './pages/ClassesPage'
 import ClassDetailPage from './pages/ClassDetailPage'
+import SubjectsPage from './pages/SubjectsPage'
 import MaterialsPage from './pages/MaterialsPage'
 import StudentProgressPage from './pages/StudentProgressPage'
 import AdminManagementPage from './pages/AdminManagementPage'
 import NotFoundPage from './pages/NotFoundPage'
+
+// Main Layout Container
+const MainLayout = ({ children }) => (
+  <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 w-full flex gap-6 flex-1">
+    <Sidebar />
+    <main className="flex-1 min-w-0">{children}</main>
+  </div>
+)
 
 function App() {
   return (
@@ -25,66 +34,113 @@ function App() {
           {/* Public Auth Route */}
           <Route path="/auth" element={<AuthPage />} />
 
-          {/* Protected Application Routes */}
+          {/* Top-Level Flat Application Routes (Prevents 404 Routing Bugs) */}
           <Route
-            path="/*"
+            path="/"
             element={
-              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 w-full flex gap-6 flex-1">
-                <Sidebar />
-                <main className="flex-1 min-w-0">
-                  <Routes>
-                    <Route
-                      path="/"
-                      element={
-                        <ProtectedRoute>
-                          <DashboardPage />
-                        </ProtectedRoute>
-                      }
-                    />
-                    <Route
-                      path="/classes"
-                      element={
-                        <ProtectedRoute>
-                          <ClassesPage />
-                        </ProtectedRoute>
-                      }
-                    />
-                    <Route
-                      path="/classes/:id"
-                      element={
-                        <ProtectedRoute>
-                          <ClassDetailPage />
-                        </ProtectedRoute>
-                      }
-                    />
-                    <Route
-                      path="/materials"
-                      element={
-                        <ProtectedRoute>
-                          <MaterialsPage />
-                        </ProtectedRoute>
-                      }
-                    />
-                    <Route
-                      path="/progress"
-                      element={
-                        <ProtectedRoute>
-                          <StudentProgressPage />
-                        </ProtectedRoute>
-                      }
-                    />
-                    <Route
-                      path="/admin"
-                      element={
-                        <ProtectedRoute allowedRoles={['admin']}>
-                          <AdminManagementPage />
-                        </ProtectedRoute>
-                      }
-                    />
-                    <Route path="*" element={<NotFoundPage />} />
-                  </Routes>
-                </main>
-              </div>
+              <ProtectedRoute>
+                <MainLayout>
+                  <DashboardPage />
+                </MainLayout>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/classes"
+            element={
+              <ProtectedRoute>
+                <MainLayout>
+                  <ClassesPage />
+                </MainLayout>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/classes/:id"
+            element={
+              <ProtectedRoute>
+                <MainLayout>
+                  <ClassDetailPage />
+                </MainLayout>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/subjects"
+            element={
+              <ProtectedRoute>
+                <MainLayout>
+                  <SubjectsPage />
+                </MainLayout>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/materials"
+            element={
+              <ProtectedRoute>
+                <MainLayout>
+                  <MaterialsPage defaultTab="materials" />
+                </MainLayout>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/games"
+            element={
+              <ProtectedRoute>
+                <MainLayout>
+                  <MaterialsPage defaultTab="games" />
+                </MainLayout>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/progress"
+            element={
+              <ProtectedRoute>
+                <MainLayout>
+                  <StudentProgressPage defaultTab="progress" />
+                </MainLayout>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/grades"
+            element={
+              <ProtectedRoute>
+                <MainLayout>
+                  <StudentProgressPage defaultTab="grades" />
+                </MainLayout>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/admin"
+            element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <MainLayout>
+                  <AdminManagementPage />
+                </MainLayout>
+              </ProtectedRoute>
+            }
+          />
+
+          {/* 404 Catch-All Route */}
+          <Route
+            path="*"
+            element={
+              <MainLayout>
+                <NotFoundPage />
+              </MainLayout>
             }
           />
         </Routes>
