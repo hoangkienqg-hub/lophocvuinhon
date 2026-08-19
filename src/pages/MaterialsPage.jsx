@@ -20,7 +20,7 @@ import {
   Sparkles,
 } from 'lucide-react'
 
-const DEFAULT_SUBJECTS = [
+const PRIMARY_SUBJECTS = [
   'Toán Học',
   'Tiếng Việt',
   'Tiếng Anh',
@@ -33,23 +33,29 @@ const DEFAULT_SUBJECTS = [
   'Hoạt Động Trải Nghiệm',
 ]
 
-const MaterialsPage = () => {
+const MaterialsPage = ({ defaultTab = 'materials' }) => {
   const { user, role, isTeacher, isAdmin } = useAuth()
 
   const [materials, setMaterials] = useState([])
-  const [subjectsList, setSubjectsList] = useState(DEFAULT_SUBJECTS)
+  const [subjectsList, setSubjectsList] = useState(PRIMARY_SUBJECTS)
   const [loading, setLoading] = useState(true)
   
   // Filters
   const [search, setSearch] = useState('')
   const [selectedSubject, setSelectedSubject] = useState('Tất cả')
-  const [selectedType, setSelectedType] = useState('Tất cả')
+  const [selectedType, setSelectedType] = useState(
+    defaultTab === 'games' ? 'game_iframe' : 'Tất cả'
+  )
 
   // Modals state
   const [showUploadModal, setShowUploadModal] = useState(false)
   const [showAssignModal, setShowAssignModal] = useState(false)
   const [showGameViewer, setShowGameViewer] = useState(false)
   const [selectedMaterial, setSelectedMaterial] = useState(null)
+
+  useEffect(() => {
+    setSelectedType(defaultTab === 'games' ? 'game_iframe' : 'Tất cả')
+  }, [defaultTab])
 
   useEffect(() => {
     fetchMaterials()
@@ -63,18 +69,20 @@ const MaterialsPage = () => {
         setSubjectsList(data.map((s) => s.name))
       }
     } catch (e) {
-      console.warn('Fallback to default subjects:', e)
+      console.warn('Using default primary subjects')
     }
   }
 
   const fetchMaterials = async () => {
     setLoading(true)
     try {
-      const { data, error } = await supabase
-        .from('materials')
-        .select('*, profiles:author_id(full_name, email)')
-        .order('created_at', { ascending: false })
+      let query = supabase.from('materials').select('*').order('created_at', { ascending: false })
 
+      if (!isAdmin) {
+        query = query.or(`is_public.eq.true,author_id.eq.${user?.id}`)
+      }
+
+      const { data, error } = await query
       if (error) throw error
       setMaterials(data || [])
     } catch (err) {
@@ -84,15 +92,16 @@ const MaterialsPage = () => {
     }
   }
 
-  const handleDeleteMaterial = async (id) => {
-    if (!window.confirm('Bạn có chắc chắn muốn xóa học liệu/game này?')) return
+  const handleDelete = async (id) => {
+    if (!window.confirm('Bạn có chắc chắn muốn xóa học liệu/game này không?')) return
 
     try {
       const { error } = await supabase.from('materials').delete().eq('id', id)
       if (error) throw error
-      fetchMaterials()
+      setMaterials((prev) => prev.filter((m) => m.id !== id))
     } catch (err) {
       console.error('Error deleting material:', err)
+      alert('Không thể xóa học liệu. Thử lại sau.')
     }
   }
 
@@ -101,171 +110,185 @@ const MaterialsPage = () => {
     setShowAssignModal(true)
   }
 
-  const handleOpenViewer = (mat) => {
+  const handleOpenPlay = (mat) => {
     setSelectedMaterial(mat)
     setShowGameViewer(true)
   }
 
+  // Filtered materials
   const filteredMaterials = materials.filter((m) => {
     const matchSearch =
       m.title?.toLowerCase().includes(search.toLowerCase()) ||
-      m.description?.toLowerCase().includes(search.toLowerCase()) ||
-      m.tags?.some((t) => t.toLowerCase().includes(search.toLowerCase()))
-
+      m.description?.toLowerCase().includes(search.toLowerCase())
     const matchSubject = selectedSubject === 'Tất cả' || m.subject === selectedSubject
-    const matchType = selectedType === 'Tất cả' || m.type === selectedType
+    
+    let matchType = true
+    if (defaultTab === 'games') {
+      matchType = m.type === 'game_iframe' || m.type === 'game_html5'
+    } else if (defaultTab === 'materials') {
+      if (selectedType !== 'Tất cả') {
+        matchType = m.type === selectedType
+      }
+    }
 
     return matchSearch && matchSubject && matchType
   })
 
+  const isGameTab = defaultTab === 'games'
+
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      {/* Header Bar */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 glass-panel p-6 rounded-3xl border border-slate-200/80 dark:border-slate-800">
         <div>
           <h2 className="text-2xl font-extrabold text-slate-800 dark:text-white flex items-center gap-2">
-            <Gamepad2 className="w-7 h-7 text-purple-600" />
-            Kho Học Liệu & Trò Chơi Tương Tác
+            {isGameTab ? (
+              <>
+                <Gamepad2 className="w-7 h-7 text-purple-600 animate-bounce" />
+                Kho Game Giáo Dục Tương Tác
+              </>
+            ) : (
+              <>
+                <FileText className="w-7 h-7 text-brand-600" />
+                Kho Học Liệu & Bài Tập
+              </>
+            )}
           </h2>
-          <p className="text-sm text-slate-500">Khám phá bài giảng, tài liệu và các trò chơi trắc nghiệm hấp dẫn dành cho Tiểu học</p>
+          <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
+            {isGameTab
+              ? 'Tổng hợp các trò chơi giáo dục, game HTML5 và trắc nghiệm tương tác siêu thú vị.'
+              : 'Tất cả phiếu bài tập, tài liệu giảng dạy, bài giảng điện tử PDF/Word dành cho học sinh.'}
+          </p>
         </div>
 
         {isTeacher && (
           <button
             onClick={() => setShowUploadModal(true)}
-            className="inline-flex items-center gap-2 px-4 py-2.5 bg-purple-600 hover:bg-purple-700 text-white font-bold text-sm rounded-xl shadow-md transition transform active:scale-95 shrink-0"
+            className="inline-flex items-center justify-center gap-2 px-5 py-3 bg-brand-600 hover:bg-brand-700 text-white font-extrabold text-sm rounded-2xl shadow-lg transition transform active:scale-95 shrink-0"
           >
             <Upload className="w-4 h-4" />
-            Tải Lên Học Liệu / Game
+            {isGameTab ? 'Thêm Game Mới' : 'Đăng Học Liệu Mới'}
           </button>
         )}
       </div>
 
       {/* Filter Bar */}
-      <div className="glass-panel p-4 rounded-2xl border border-slate-200/80 dark:border-slate-800 flex flex-col md:flex-row gap-3">
-        {/* Search */}
-        <div className="relative flex-1">
+      <div className="glass-panel p-4 rounded-2xl border border-slate-200/80 dark:border-slate-800 flex flex-wrap items-center justify-between gap-4">
+        <div className="flex items-center gap-2 flex-1 min-w-[240px] bg-slate-100 dark:bg-slate-800 px-3.5 py-2 rounded-xl">
+          <Search className="w-4 h-4 text-slate-400" />
           <input
             type="text"
-            placeholder="Tìm theo tên học liệu, từ khóa, tag..."
+            placeholder={isGameTab ? 'Tìm kiếm game giáo dục...' : 'Tìm kiếm học liệu, phiếu bài tập...'}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 focus:ring-2 focus:ring-purple-500 outline-none text-sm transition"
+            className="bg-transparent text-sm w-full outline-none text-slate-800 dark:text-white font-medium"
           />
-          <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
         </div>
 
-        {/* Subject Filter */}
-        <select
-          value={selectedSubject}
-          onChange={(e) => setSelectedSubject(e.target.value)}
-          className="px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm font-semibold focus:ring-2 focus:ring-purple-500 outline-none"
-        >
-          <option value="Tất cả">Tất cả Môn Học</option>
-          {subjectsList.map((s) => (
-            <option key={s} value={s}>
-              {s}
-            </option>
-          ))}
-        </select>
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex items-center gap-1.5 text-xs font-bold text-slate-500">
+            <Filter className="w-3.5 h-3.5" />
+            <span>Môn Học:</span>
+          </div>
+          <select
+            value={selectedSubject}
+            onChange={(e) => setSelectedSubject(e.target.value)}
+            className="px-3 py-2 text-xs font-bold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none text-slate-700 dark:text-slate-200"
+          >
+            <option value="Tất cả">Tất Cả Môn</option>
+            {subjectsList.map((s) => (
+              <option key={s} value={s}>
+                {s}
+              </option>
+            ))}
+          </select>
 
-        {/* Type Filter */}
-        <select
-          value={selectedType}
-          onChange={(e) => setSelectedType(e.target.value)}
-          className="px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm font-semibold focus:ring-2 focus:ring-purple-500 outline-none"
-        >
-          <option value="Tất cả">Tất cả Định Dạng</option>
-          <option value="document">Tài liệu (PDF/Word)</option>
-          <option value="video">Video Bài Giảng</option>
-          <option value="game_iframe">Embed Game (Quiz/Wordwall)</option>
-          <option value="game_html5">Game HTML5 Custom</option>
-        </select>
+          {!isGameTab && (
+            <select
+              value={selectedType}
+              onChange={(e) => setSelectedType(e.target.value)}
+              className="px-3 py-2 text-xs font-bold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none text-slate-700 dark:text-slate-200"
+            >
+              <option value="Tất cả">Tất Cả Loại</option>
+              <option value="document">📄 Phiếu Bài Tập / PDF</option>
+              <option value="game_iframe">🎮 Game Nhúng / HTML5</option>
+              <option value="video">🎥 Video Bài Giảng</option>
+            </select>
+          )}
+        </div>
       </div>
 
-      {/* Grid */}
+      {/* Materials / Games List Grid */}
       {loading ? (
-        <LoadingSpinner label="Đang tải kho học liệu..." />
+        <LoadingSpinner label={isGameTab ? 'Đang tải danh sách Game...' : 'Đang tải danh sách Học liệu...'} />
       ) : filteredMaterials.length === 0 ? (
         <EmptyState
-          icon={Gamepad2}
-          title="Không tìm thấy học liệu phù hợp"
-          description="Thử tìm kiếm với từ khóa khác hoặc tải lên học liệu mới!"
-          actionLabel={isTeacher ? 'Tải Lên Học Liệu' : undefined}
-          onAction={() => setShowUploadModal(true)}
+          title={isGameTab ? 'Chưa Có Game Nào' : 'Chưa Có Học Liệu Nào'}
+          description={
+            isGameTab
+              ? 'Hiện tại chưa có trò chơi giáo dục nào được tải lên.'
+              : 'Chưa tìm thấy học liệu phù hợp với bộ lọc.'
+          }
+          actionLabel={isTeacher ? (isGameTab ? '+ Thêm Game Mới' : '+ Đăng Học Liệu') : null}
+          onAction={isTeacher ? () => setShowUploadModal(true) : null}
         />
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-          {filteredMaterials.map((mat) => {
-            const isOwner = mat.author_id === user?.id || isAdmin
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredMaterials.map((m) => {
+            const isGame = m.type === 'game_iframe' || m.type === 'game_html5'
+            const isOwner = user && (m.author_id === user.id || isAdmin)
+
             return (
               <div
-                key={mat.id}
-                className="glass-panel rounded-3xl p-5 border border-slate-200/80 dark:border-slate-800 hover:shadow-xl transition-all duration-300 flex flex-col justify-between group"
+                key={m.id}
+                className="glass-panel p-5 rounded-3xl border border-slate-200/80 dark:border-slate-800 flex flex-col justify-between hover:shadow-xl hover:border-brand-400 transition-all duration-200 group"
               >
                 <div>
                   <div className="flex items-center justify-between gap-2 mb-3">
-                    <span className="text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-0.5 bg-purple-100 dark:bg-purple-950 text-purple-700 dark:text-purple-300 rounded-md">
-                      {mat.type}
+                    <span className="text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-1 bg-brand-50 text-brand-700 dark:bg-brand-950 dark:text-brand-300 rounded-lg">
+                      {m.subject || 'Tổng hợp'}
                     </span>
-                    <span className="text-xs font-semibold text-slate-500">{mat.subject}</span>
+                    <span className="text-[10px] font-bold uppercase px-2 py-0.5 bg-slate-100 dark:bg-slate-800 text-slate-500 rounded-md">
+                      {isGame ? '🎮 GAME' : '📄 PHIẾU BÀI TẬP'}
+                    </span>
                   </div>
 
-                  <h3 className="font-extrabold text-base text-slate-800 dark:text-white mb-2 group-hover:text-purple-600 transition">
-                    {mat.title}
+                  <h3 className="font-extrabold text-base text-slate-800 dark:text-white group-hover:text-brand-600 transition leading-snug mb-2">
+                    {m.title}
                   </h3>
-                  <p className="text-slate-500 text-xs line-clamp-2 mb-4">
-                    {mat.description || 'Chưa có hướng dẫn mô tả.'}
+                  <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 font-medium mb-4">
+                    {m.description || 'Bài tập tương tác chuẩn chương trình Tiểu học.'}
                   </p>
-
-                  {/* Tags */}
-                  {mat.tags && mat.tags.length > 0 && (
-                    <div className="flex flex-wrap gap-1 mb-4">
-                      {mat.tags.map((t, idx) => (
-                        <span
-                          key={idx}
-                          className="text-[10px] bg-slate-100 dark:bg-slate-800 text-slate-500 px-2 py-0.5 rounded-md font-mono"
-                        >
-                          #{t}
-                        </span>
-                      ))}
-                    </div>
-                  )}
                 </div>
 
-                <div className="pt-4 border-t border-slate-100 dark:border-slate-800 space-y-2">
-                  <div className="flex items-center justify-between text-xs text-slate-500">
-                    <span>Tác giả: {mat.profiles?.full_name || 'Giáo viên'}</span>
-                    {isOwner && (
-                      <button
-                        onClick={() => handleDeleteMaterial(mat.id)}
-                        className="text-slate-400 hover:text-red-600 transition"
-                        title="Xóa học liệu"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    )}
-                  </div>
+                <div className="pt-3 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between gap-2">
+                  <button
+                    onClick={() => handleOpenPlay(m)}
+                    className="flex-1 py-2.5 bg-brand-600 hover:bg-brand-700 text-white font-extrabold text-xs rounded-xl flex items-center justify-center gap-1.5 shadow-md transition"
+                  >
+                    {isGame ? <Play className="w-3.5 h-3.5 fill-current" /> : <FileText className="w-3.5 h-3.5" />}
+                    <span>{isGame ? 'Chơi Game' : 'Mở Làm Bài Direct'}</span>
+                  </button>
 
-                  <div className="grid grid-cols-2 gap-2 pt-1">
+                  {isTeacher && (
                     <button
-                      onClick={() => handleOpenViewer(mat)}
-                      className="w-full py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition"
+                      onClick={() => handleOpenAssign(m)}
+                      className="p-2.5 bg-slate-100 dark:bg-slate-800 hover:bg-emerald-50 hover:text-emerald-600 dark:hover:bg-emerald-950 text-slate-600 dark:text-slate-300 rounded-xl transition"
+                      title="Giao Bài Tập Cho Lớp"
                     >
-                      <Play className="w-3.5 h-3.5 fill-current" />
-                      Chơi / Xem
+                      <Send className="w-4 h-4" />
                     </button>
+                  )}
 
-                    {isTeacher && (
-                      <button
-                        onClick={() => handleOpenAssign(mat)}
-                        className="w-full py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition"
-                      >
-                        <Send className="w-3.5 h-3.5" />
-                        Giao Cho Lớp
-                      </button>
-                    )}
-                  </div>
+                  {isOwner && (
+                    <button
+                      onClick={() => handleDelete(m.id)}
+                      className="p-2.5 bg-slate-100 dark:bg-slate-800 hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950 text-slate-400 rounded-xl transition"
+                      title="Xóa học liệu"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  )}
                 </div>
               </div>
             )
