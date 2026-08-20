@@ -43,9 +43,7 @@ const MaterialsPage = ({ defaultTab = 'materials' }) => {
   // Filters
   const [search, setSearch] = useState('')
   const [selectedSubject, setSelectedSubject] = useState('Tất cả')
-  const [selectedType, setSelectedType] = useState(
-    defaultTab === 'games' ? 'game_iframe' : 'Tất cả'
-  )
+  const [selectedType, setSelectedType] = useState('Tất cả')
 
   // Modals state
   const [showUploadModal, setShowUploadModal] = useState(false)
@@ -54,7 +52,7 @@ const MaterialsPage = ({ defaultTab = 'materials' }) => {
   const [selectedMaterial, setSelectedMaterial] = useState(null)
 
   useEffect(() => {
-    setSelectedType(defaultTab === 'games' ? 'game_iframe' : 'Tất cả')
+    setSelectedType('Tất cả')
   }, [defaultTab])
 
   useEffect(() => {
@@ -124,10 +122,13 @@ const MaterialsPage = ({ defaultTab = 'materials' }) => {
     
     let matchType = true
     if (defaultTab === 'games') {
+      // Strictly show ONLY games in Kho Game Giáo Dục
       matchType = m.type === 'game_iframe' || m.type === 'game_html5'
-    } else if (defaultTab === 'materials') {
+    } else {
+      // Strictly show ONLY pure learning materials in Kho Học Liệu (EXCLUDE GAMES!)
+      matchType = m.type !== 'game_iframe' && m.type !== 'game_html5'
       if (selectedType !== 'Tất cả') {
-        matchType = m.type === selectedType
+        matchType = matchType && m.type === selectedType
       }
     }
 
@@ -150,14 +151,14 @@ const MaterialsPage = ({ defaultTab = 'materials' }) => {
             ) : (
               <>
                 <FileText className="w-7 h-7 text-brand-600" />
-                Kho Học Liệu & Bài Tập
+                Kho Học Liệu & Bài Tập Giảng Dạy
               </>
             )}
           </h2>
           <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
             {isGameTab
               ? 'Tổng hợp các trò chơi giáo dục, game HTML5 và trắc nghiệm tương tác siêu thú vị.'
-              : 'Tất cả phiếu bài tập, tài liệu giảng dạy, bài giảng điện tử PDF/Word dành cho học sinh.'}
+              : 'Tổng hợp phiếu bài tập, đề thi, bài giảng điện tử PDF/Word thuần túy cho học sinh.'}
           </p>
         </div>
 
@@ -167,7 +168,7 @@ const MaterialsPage = ({ defaultTab = 'materials' }) => {
             className="inline-flex items-center justify-center gap-2 px-5 py-3 bg-brand-600 hover:bg-brand-700 text-white font-extrabold text-sm rounded-2xl shadow-lg transition transform active:scale-95 shrink-0"
           >
             <Upload className="w-4 h-4" />
-            {isGameTab ? 'Thêm Game Mới' : 'Đăng Học Liệu Mới'}
+            {isGameTab ? 'Thêm Game Mới' : 'Tải Lên Học Liệu Mới'}
           </button>
         )}
       </div>
@@ -178,7 +179,7 @@ const MaterialsPage = ({ defaultTab = 'materials' }) => {
           <Search className="w-4 h-4 text-slate-400" />
           <input
             type="text"
-            placeholder={isGameTab ? 'Tìm kiếm game giáo dục...' : 'Tìm kiếm học liệu, phiếu bài tập...'}
+            placeholder={isGameTab ? 'Tìm kiếm game giáo dục...' : 'Tìm kiếm học liệu, phiếu bài tập, đề thi...'}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="bg-transparent text-sm w-full outline-none text-slate-800 dark:text-white font-medium"
@@ -209,9 +210,8 @@ const MaterialsPage = ({ defaultTab = 'materials' }) => {
               onChange={(e) => setSelectedType(e.target.value)}
               className="px-3 py-2 text-xs font-bold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none text-slate-700 dark:text-slate-200"
             >
-              <option value="Tất cả">Tất Cả Loại</option>
-              <option value="document">📄 Phiếu Bài Tập / PDF</option>
-              <option value="game_iframe">🎮 Game Nhúng / HTML5</option>
+              <option value="Tất cả">Tất Cả Định Dạng</option>
+              <option value="document">📄 Phiếu Bài Tập / PDF / Word</option>
               <option value="video">🎥 Video Bài Giảng</option>
             </select>
           )}
@@ -227,9 +227,9 @@ const MaterialsPage = ({ defaultTab = 'materials' }) => {
           description={
             isGameTab
               ? 'Hiện tại chưa có trò chơi giáo dục nào được tải lên.'
-              : 'Chưa tìm thấy học liệu phù hợp với bộ lọc.'
+              : 'Chưa có phiếu bài tập/học liệu nào phù hợp với bộ lọc.'
           }
-          actionLabel={isTeacher ? (isGameTab ? '+ Thêm Game Mới' : '+ Đăng Học Liệu') : null}
+          actionLabel={isTeacher ? (isGameTab ? '+ Thêm Game Mới' : '+ Tải Lên Học Liệu') : null}
           onAction={isTeacher ? () => setShowUploadModal(true) : null}
         />
       ) : (
@@ -257,7 +257,7 @@ const MaterialsPage = ({ defaultTab = 'materials' }) => {
                     {m.title}
                   </h3>
                   <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 font-medium mb-4">
-                    {m.description || 'Bài tập tương tác chuẩn chương trình Tiểu học.'}
+                    {m.description || 'Phiếu bài tập / tài liệu giảng dạy chuẩn Tiểu học.'}
                   </p>
                 </div>
 
@@ -267,7 +267,7 @@ const MaterialsPage = ({ defaultTab = 'materials' }) => {
                     className="flex-1 py-2.5 bg-brand-600 hover:bg-brand-700 text-white font-extrabold text-xs rounded-xl flex items-center justify-center gap-1.5 shadow-md transition"
                   >
                     {isGame ? <Play className="w-3.5 h-3.5 fill-current" /> : <FileText className="w-3.5 h-3.5" />}
-                    <span>{isGame ? 'Chơi Game' : 'Mở Làm Bài Direct'}</span>
+                    <span>{isGame ? 'Chơi Game' : '📜 Mở Làm Bài / Xem'}</span>
                   </button>
 
                   {isTeacher && (
