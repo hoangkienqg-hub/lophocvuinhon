@@ -36,11 +36,11 @@ const Sidebar = () => {
     })
   }
 
-  // TÁCH THÀNH 4 MỤC RIÊNG BIỆT CHUẨN XÁC
+  // CẬP NHẬT MENU ĐIỀU HƯỚNG: KHO BÀI TẬP & KHO GAME GIÁO DỤC
   navItems.push(
     {
       to: '/materials',
-      label: 'Kho Học Liệu',
+      label: 'Kho Bài Tập',
       icon: FileText,
     },
     {
