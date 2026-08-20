@@ -91,7 +91,7 @@ const MaterialsPage = ({ defaultTab = 'materials' }) => {
   }
 
   const handleDelete = async (id) => {
-    if (!window.confirm('Bạn có chắc chắn muốn xóa học liệu/game này không?')) return
+    if (!window.confirm('Bạn có chắc chắn muốn xóa bài tập này không?')) return
 
     try {
       const { error } = await supabase.from('materials').delete().eq('id', id)
@@ -99,7 +99,7 @@ const MaterialsPage = ({ defaultTab = 'materials' }) => {
       setMaterials((prev) => prev.filter((m) => m.id !== id))
     } catch (err) {
       console.error('Error deleting material:', err)
-      alert('Không thể xóa học liệu. Thử lại sau.')
+      alert('Không thể xóa bài tập. Thử lại sau.')
     }
   }
 
@@ -125,7 +125,7 @@ const MaterialsPage = ({ defaultTab = 'materials' }) => {
       // Strictly show ONLY games in Kho Game Giáo Dục
       matchType = m.type === 'game_iframe' || m.type === 'game_html5'
     } else {
-      // Strictly show ONLY pure learning materials in Kho Học Liệu (EXCLUDE GAMES!)
+      // Strictly show ONLY pure learning materials/assignments in Kho Bài Tập (EXCLUDE GAMES!)
       matchType = m.type !== 'game_iframe' && m.type !== 'game_html5'
       if (selectedType !== 'Tất cả') {
         matchType = matchType && m.type === selectedType
@@ -151,14 +151,14 @@ const MaterialsPage = ({ defaultTab = 'materials' }) => {
             ) : (
               <>
                 <FileText className="w-7 h-7 text-brand-600" />
-                Kho Học Liệu & Bài Tập Giảng Dạy
+                Kho Bài Tập & Đề Thi Giảng Dạy
               </>
             )}
           </h2>
           <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
             {isGameTab
               ? 'Tổng hợp các trò chơi giáo dục, game HTML5 và trắc nghiệm tương tác siêu thú vị.'
-              : 'Tổng hợp phiếu bài tập, đề thi, bài giảng điện tử PDF/Word thuần túy cho học sinh.'}
+              : 'Tổng hợp phiếu bài tập, đề kiểm tra, bài giảng điện tử PDF/Word dành cho học sinh.'}
           </p>
         </div>
 
@@ -168,7 +168,7 @@ const MaterialsPage = ({ defaultTab = 'materials' }) => {
             className="inline-flex items-center justify-center gap-2 px-5 py-3 bg-brand-600 hover:bg-brand-700 text-white font-extrabold text-sm rounded-2xl shadow-lg transition transform active:scale-95 shrink-0"
           >
             <Upload className="w-4 h-4" />
-            {isGameTab ? 'Thêm Game Mới' : 'Tải Lên Học Liệu Mới'}
+            {isGameTab ? 'Thêm Game Mới' : 'Tải Lên Bài Tập Mới'}
           </button>
         )}
       </div>
@@ -179,7 +179,7 @@ const MaterialsPage = ({ defaultTab = 'materials' }) => {
           <Search className="w-4 h-4 text-slate-400" />
           <input
             type="text"
-            placeholder={isGameTab ? 'Tìm kiếm game giáo dục...' : 'Tìm kiếm học liệu, phiếu bài tập, đề thi...'}
+            placeholder={isGameTab ? 'Tìm kiếm game giáo dục...' : 'Tìm kiếm bài tập, đề thi, phiếu học tập...'}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="bg-transparent text-sm w-full outline-none text-slate-800 dark:text-white font-medium"
@@ -220,16 +220,16 @@ const MaterialsPage = ({ defaultTab = 'materials' }) => {
 
       {/* Materials / Games List Grid */}
       {loading ? (
-        <LoadingSpinner label={isGameTab ? 'Đang tải danh sách Game...' : 'Đang tải danh sách Học liệu...'} />
+        <LoadingSpinner label={isGameTab ? 'Đang tải danh sách Game...' : 'Đang tải danh sách Bài tập...'} />
       ) : filteredMaterials.length === 0 ? (
         <EmptyState
-          title={isGameTab ? 'Chưa Có Game Nào' : 'Chưa Có Học Liệu Nào'}
+          title={isGameTab ? 'Chưa Có Game Nào' : 'Chưa Có Bài Tập Nào'}
           description={
             isGameTab
               ? 'Hiện tại chưa có trò chơi giáo dục nào được tải lên.'
-              : 'Chưa có phiếu bài tập/học liệu nào phù hợp với bộ lọc.'
+              : 'Chưa có phiếu bài tập/đề thi nào phù hợp với bộ lọc.'
           }
-          actionLabel={isTeacher ? (isGameTab ? '+ Thêm Game Mới' : '+ Tải Lên Học Liệu') : null}
+          actionLabel={isTeacher ? (isGameTab ? '+ Thêm Game Mới' : '+ Tải Lên Bài Tập Mới') : null}
           onAction={isTeacher ? () => setShowUploadModal(true) : null}
         />
       ) : (
@@ -284,7 +284,7 @@ const MaterialsPage = ({ defaultTab = 'materials' }) => {
                     <button
                       onClick={() => handleDelete(m.id)}
                       className="p-2.5 bg-slate-100 dark:bg-slate-800 hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950 text-slate-400 rounded-xl transition"
-                      title="Xóa học liệu"
+                      title="Xóa bài tập"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
