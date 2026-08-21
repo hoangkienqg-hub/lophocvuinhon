@@ -7,14 +7,14 @@ import {
   BookOpen,
   FileText,
   Gamepad2,
-  TrendingUp,
-  Award,
+  Trophy,
   ShieldCheck,
 } from 'lucide-react'
 
 const Sidebar = () => {
   const { role, user, isTeacher, isAdmin } = useAuth()
 
+  // MENU ĐIỀU HƯỚNG 4 TÍNH NĂNG CHÍNH CHUẨN CÔ GIÁO
   const navItems = [
     {
       to: '/',
@@ -26,6 +26,21 @@ const Sidebar = () => {
       label: 'Quản Lý Lớp Học',
       icon: Users,
     },
+    {
+      to: '/materials',
+      label: 'Kho Học Liệu',
+      icon: FileText,
+    },
+    {
+      to: '/games',
+      label: 'Kho Game',
+      icon: Gamepad2,
+    },
+    {
+      to: '/grades',
+      label: 'Bảng Điểm',
+      icon: Trophy,
+    },
   ]
 
   if (isTeacher || isAdmin) {
@@ -35,30 +50,6 @@ const Sidebar = () => {
       icon: BookOpen,
     })
   }
-
-  // CẬP NHẬT MENU ĐIỀU HƯỚNG: KHO BÀI TẬP & KHO GAME GIÁO DỤC
-  navItems.push(
-    {
-      to: '/materials',
-      label: 'Kho Bài Tập',
-      icon: FileText,
-    },
-    {
-      to: '/games',
-      label: 'Kho Game Giáo Dục',
-      icon: Gamepad2,
-    },
-    {
-      to: '/progress',
-      label: 'Tiến Độ Học Tập',
-      icon: TrendingUp,
-    },
-    {
-      to: '/grades',
-      label: 'Bảng Điểm Lớp Học',
-      icon: Award,
-    }
-  )
 
   if (isAdmin) {
     navItems.push({
