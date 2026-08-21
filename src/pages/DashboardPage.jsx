@@ -102,80 +102,61 @@ const GAME_QUESTION_BANK = {
   ],
   science_explore: [
     {
-      question: 'Cây xanh hấp thụ khí gì trong quá trình quang hợp dưới ánh nắng?',
-      options: ['Khí Cacbonic', 'Khí Ôxy', 'Khí Nitơ', 'Khí Hydro'],
-      answer: 'Khí Cacbonic',
+      question: 'Loài động vật nào được gọi là "Chúa tể sơn lâm"?',
+      options: ['Hổ', 'Sư tử', 'Voi', 'Báo'],
+      answer: 'Hổ',
     },
     {
-      question: 'Động vật nào sau đây đẻ trứng?',
-      options: ['Con Gà', 'Con Bò', 'Con Chó', 'Con Mèo'],
-      answer: 'Con Gà',
+      question: 'Cây cối cần chất khí nào trong không khí để thực hiện quang hợp?',
+      options: ['Khí Ô-xi', 'Khí Các-bô-nhiên (CO2)', 'Khí Ni-tơ', 'Khí Hi-đrô'],
+      answer: 'Khí Các-bô-nhiên (CO2)',
     },
     {
-      question: 'Nước hoa quả tươi cung cấp nhiều chất gì cho cơ thể?',
-      options: ['Vitamin', 'Chất béo', 'Đường hóa học', 'Muối biển'],
-      answer: 'Vitamin',
+      question: 'Hành tinh nào gần Mặt Trời nhất trong Hệ Mặt Trời?',
+      options: ['Trái Đất', 'Sao Thủy', 'Sao Hỏa', 'Sao Kim'],
+      answer: 'Sao Thủy',
     },
     {
-      question: 'Trái Đất quay quanh vật thể nào trong Hệ Mặt Trời?',
-      options: ['Mặt Trời', 'Mặt Trăng', 'Sao Hỏa', 'Sao Kim'],
-      answer: 'Mặt Trời',
+      question: 'Nước đóng băng ở nhiệt độ bao nhiêu độ C?',
+      options: ['100°C', '50°C', '0°C', '-10°C'],
+      answer: '0°C',
     },
     {
-      question: 'Loài vật nào được mệnh danh là "Chúa sơn lâm"?',
-      options: ['Con Hổ (Hùm)', 'Sư Tử', 'Voi', 'Gấu'],
-      answer: 'Con Hổ (Hùm)',
+      question: 'Bộ phận nào của cây giúp hút nước và chất dinh dưỡng từ đất?',
+      options: ['Lá cây', 'Rễ cây', 'Thân cây', 'Hoa'],
+      answer: 'Rễ cây',
     },
   ],
   english_fun: [
-    {
-      question: 'Từ "Apple" trong Tiếng Việt nghĩa là quả gì?',
-      options: ['Quả Táo', 'Quả Cam', 'Quả Chuối', 'Quả Dưa hấu'],
-      answer: 'Quả Táo',
-    },
-    {
-      question: 'Từ Tiếng Anh chỉ "Con Mèo" là gì?',
-      options: ['Cat', 'Dog', 'Bird', 'Fish'],
-      answer: 'Cat',
-    },
-    {
-      question: 'Số "10" trong Tiếng Anh đọc là gì?',
-      options: ['Ten', 'Five', 'Eight', 'Seven'],
-      answer: 'Ten',
-    },
-    {
-      question: 'Từ Tiếng Anh chỉ "Mặt Trời" là gì?',
-      options: ['Sun', 'Moon', 'Star', 'Cloud'],
-      answer: 'Sun',
-    },
-    {
-      question: 'Từ "Teacher" có nghĩa là gì?',
-      options: ['Giáo viên', 'Học sinh', 'Bác sĩ', 'Kỹ sư'],
-      answer: 'Giáo viên',
-    },
+    { question: 'Từ nào nghĩa là "Quả Táo" trong Tiếng Anh?', options: ['Banana', 'Apple', 'Orange', 'Grape'], answer: 'Apple' },
+    { question: '"School" có nghĩa là gì?', options: ['Bệnh viện', 'Trường học', 'Công viên', 'Nhà sách'], answer: 'Trường học' },
+    { question: 'Con vật nào có tên Tiếng Anh là "Cat"?', options: ['Con chó', 'Con mèo', 'Con thỏ', 'Con chuột'], answer: 'Con mèo' },
+    { question: 'Màu "Xanh Dương" trong Tiếng Anh là gì?', options: ['Red', 'Green', 'Blue', 'Yellow'], answer: 'Blue' },
+    { question: 'Số 10 trong Tiếng Anh đọc là gì?', options: ['Five', 'Seven', 'Nine', 'Ten'], answer: 'Ten' },
   ],
 }
 
 const DashboardPage = () => {
-  const { user, profile, role, isAdmin, isTeacher } = useAuth()
+  const { user, profile, role, isTeacher, isAdmin } = useAuth()
 
+  // State
   const [stats, setStats] = useState({
     classesCount: 0,
     materialsCount: 0,
     studentsCount: 0,
     assignmentsCount: 0,
   })
-
   const [recentClasses, setRecentClasses] = useState([])
   const [recentMaterials, setRecentMaterials] = useState([])
   const [loading, setLoading] = useState(true)
 
+  // Modals
   const [showCreateClass, setShowCreateClass] = useState(false)
   const [showJoinClass, setShowJoinClass] = useState(false)
   const [showUploadMaterial, setShowUploadMaterial] = useState(false)
 
-  // Mini-Game Interactive State
-  const [activeMiniGame, setActiveMiniGame] = useState(null)
+  // Interactive Mini Game State
+  const [selectedGame, setSelectedGame] = useState(null)
   const [currentQuestions, setCurrentQuestions] = useState([])
   const [gameScore, setGameScore] = useState(0)
   const [gameQuestionIndex, setGameQuestionIndex] = useState(0)
@@ -249,21 +230,21 @@ const DashboardPage = () => {
           .select('class_id, classes(id, name, subject, code)')
           .eq('student_id', user.id)
 
-        const joinedClasses = sMemberships?.map((m) => m.classes).filter(Boolean) || []
+        const studentClasses = (sMemberships || []).map((m) => m.classes).filter(Boolean)
 
-        const { data: pMaterials } = await supabase
+        const { data: pMaterials, count: pmCount } = await supabase
           .from('materials')
-          .select('id, title, type, subject, created_at')
+          .select('id, title, type, subject, created_at', { count: 'exact' })
           .eq('is_public', true)
           .limit(4)
 
         setStats({
-          classesCount: joinedClasses.length,
-          materialsCount: pMaterials?.length || 0,
-          studentsCount: 1,
+          classesCount: studentClasses.length,
+          materialsCount: pmCount || 0,
+          studentsCount: 0,
           assignmentsCount: 0,
         })
-        setRecentClasses(joinedClasses.slice(0, 4))
+        setRecentClasses(studentClasses.slice(0, 4))
         setRecentMaterials(pMaterials || [])
       }
     } catch (err) {
@@ -273,19 +254,19 @@ const DashboardPage = () => {
     }
   }
 
-  const startMiniGame = (game) => {
-    setActiveMiniGame(game)
-    const questions = GAME_QUESTION_BANK[game.id] || GAME_QUESTION_BANK['math_fast']
+  const handleStartGame = (game) => {
+    setSelectedGame(game)
+    const questions = GAME_QUESTION_BANK[game.id] || GAME_QUESTION_BANK.math_fast
     setCurrentQuestions(questions)
-    setGameScore(0)
     setGameQuestionIndex(0)
+    setGameScore(0)
     setGameTimer(30)
     setGameActive(true)
     setGameFeedback('')
     setSelectedOption(null)
   }
 
-  const handleSelectOption = (opt) => {
+  const handleAnswerClick = (opt) => {
     if (!gameActive || selectedOption !== null) return
     setSelectedOption(opt)
 
@@ -321,17 +302,13 @@ const DashboardPage = () => {
         <div className="relative z-10 max-w-2xl">
           <div className="inline-flex items-center gap-2 px-3 py-1 bg-white/20 backdrop-blur-md rounded-full text-xs font-extrabold uppercase tracking-wider mb-3">
             <Sparkles className="w-3.5 h-3.5 text-amber-300" />
-            Xin Chào, {profile?.full_name || user.email}!
+            Cô giáo Hoàng Thị Kiên
           </div>
           <h2 className="text-2xl sm:text-3xl font-extrabold mb-2 leading-tight">
-            Chào mừng bạn đến với Lớp Học Vui Nhộn 🎓
+            Xin chào các bạn đến với Lớp Học Vui Nhộn 🎓
           </h2>
           <p className="text-brand-100 text-sm mb-6 leading-relaxed">
-            {role === 'admin'
-              ? 'Bảng điều khiển Quản trị viên tối cao: Quản lý người dùng, phân quyền, xem báo cáo toàn bộ lớp học và kho học liệu.'
-              : role === 'teacher'
-              ? 'Tạo lớp học mới, chia sẻ tài liệu, tải game HTML5/Embed và theo dõi bảng điểm học sinh dễ dàng.'
-              : 'Tham gia các lớp học sôi động, làm bài tập trắc nghiệm và thử sức với những trò chơi tương tác bổ ích!'}
+            Hệ thống quản lý lớp học, kho bài tập và góc trò chơi giáo dục tương tác dành cho học sinh Tiểu học.
           </p>
 
           <div className="flex flex-wrap gap-3">
@@ -348,7 +325,7 @@ const DashboardPage = () => {
             {role === 'student' && (
               <button
                 onClick={() => setShowJoinClass(true)}
-                className="inline-flex items-center gap-2 px-4 py-2.5 bg-amber-500 hover:bg-amber-600 text-white rounded-xl font-extrabold text-sm shadow-md transition transform active:scale-95"
+                className="inline-flex items-center gap-2 px-4 py-2.5 bg-white text-brand-800 hover:bg-brand-50 rounded-xl font-extrabold text-sm shadow-md transition transform active:scale-95"
               >
                 <KeyRound className="w-4 h-4" />
                 Nhập Mã Vào Lớp
@@ -358,300 +335,294 @@ const DashboardPage = () => {
             {isTeacher && (
               <button
                 onClick={() => setShowUploadMaterial(true)}
-                className="inline-flex items-center gap-2 px-4 py-2.5 bg-white/20 hover:bg-white/30 backdrop-blur-md text-white rounded-xl font-extrabold text-sm border border-white/30 transition"
+                className="inline-flex items-center gap-2 px-4 py-2.5 bg-brand-700/50 hover:bg-brand-700 text-white rounded-xl font-extrabold text-sm border border-white/20 transition"
               >
                 <Upload className="w-4 h-4" />
-                Đăng Học Liệu / Game
+                Đăng Bài Tập / Game
               </button>
             )}
           </div>
         </div>
       </div>
 
-      {/* Metrics Row */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* Overview Quick Stats */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         <div className="glass-panel p-5 rounded-2xl border border-slate-200/80 dark:border-slate-800 flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-blue-100 dark:bg-blue-950 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold text-xl">
+          <div className="w-12 h-12 rounded-2xl bg-blue-100 dark:bg-blue-950 text-blue-600 dark:text-blue-400 flex items-center justify-center font-extrabold text-xl">
             <Users className="w-6 h-6" />
           </div>
           <div>
-            <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Lớp Học</p>
-            <h3 className="text-2xl font-extrabold text-slate-800 dark:text-white">{stats.classesCount}</h3>
+            <p className="text-xs font-extrabold uppercase tracking-wider text-slate-400">Lớp Học</p>
+            <h3 className="text-2xl font-black text-slate-800 dark:text-white">{stats.classesCount}</h3>
           </div>
         </div>
 
         <div className="glass-panel p-5 rounded-2xl border border-slate-200/80 dark:border-slate-800 flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-purple-100 dark:bg-purple-950 text-purple-600 dark:text-purple-400 flex items-center justify-center font-bold text-xl">
+          <div className="w-12 h-12 rounded-2xl bg-purple-100 dark:bg-purple-950 text-purple-600 dark:text-purple-400 flex items-center justify-center font-extrabold text-xl">
+            <BookOpen className="w-6 h-6" />
+          </div>
+          <div>
+            <p className="text-xs font-extrabold uppercase tracking-wider text-slate-400">Kho Bài Tập</p>
+            <h3 className="text-2xl font-black text-slate-800 dark:text-white">{stats.materialsCount}</h3>
+          </div>
+        </div>
+
+        <div className="glass-panel p-5 rounded-2xl border border-slate-200/80 dark:border-slate-800 flex items-center gap-4">
+          <div className="w-12 h-12 rounded-2xl bg-emerald-100 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-extrabold text-xl">
             <Gamepad2 className="w-6 h-6" />
           </div>
           <div>
-            <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Học Liệu & Game</p>
-            <h3 className="text-2xl font-extrabold text-slate-800 dark:text-white">{stats.materialsCount}</h3>
+            <p className="text-xs font-extrabold uppercase tracking-wider text-slate-400">Game Giáo Dục</p>
+            <h3 className="text-2xl font-black text-slate-800 dark:text-white">4 Trò Chơi</h3>
           </div>
         </div>
 
         <div className="glass-panel p-5 rounded-2xl border border-slate-200/80 dark:border-slate-800 flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-emerald-100 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold text-xl">
-            <TrendingUp className="w-6 h-6" />
+          <div className="w-12 h-12 rounded-2xl bg-amber-100 dark:bg-amber-950 text-amber-600 dark:text-amber-400 flex items-center justify-center font-extrabold text-xl">
+            <Trophy className="w-6 h-6" />
           </div>
           <div>
-            <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Tiến Độ Học</p>
-            <h3 className="text-2xl font-extrabold text-slate-800 dark:text-white">100%</h3>
-          </div>
-        </div>
-
-        <div className="glass-panel p-5 rounded-2xl border border-slate-200/80 dark:border-slate-800 flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-amber-100 dark:bg-amber-950 text-amber-600 dark:text-amber-400 flex items-center justify-center font-bold text-xl">
-            <ShieldCheck className="w-6 h-6" />
-          </div>
-          <div>
-            <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Vai Trò</p>
-            <h3 className="text-lg font-extrabold text-slate-800 dark:text-white capitalize">{role}</h3>
+            <p className="text-xs font-extrabold uppercase tracking-wider text-slate-400">Điểm Đổi Quà</p>
+            <h3 className="text-2xl font-black text-slate-800 dark:text-white">{gameScore} ⭐</h3>
           </div>
         </div>
       </div>
 
-      {/* 🎮 SECTION MỚI: GÓC TRÒ CHƠI VUI NHỘN (HỌC MÀ CHƠI - CHƠI MÀ HỌC) */}
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h3 className="text-xl font-extrabold text-slate-800 dark:text-white flex items-center gap-2">
-            <Gamepad2 className="w-6 h-6 text-purple-600 animate-pulse" />
-            🎮 Góc Trò Chơi Vui Nhộn (Học Mà Chơi - Chơi Mà Học)
-          </h3>
+      {/* FUN EDUCATIONAL GAMES CORNER */}
+      <div className="glass-panel p-6 rounded-3xl border border-slate-200/80 dark:border-slate-800 space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-100 dark:border-slate-800">
+          <div>
+            <h3 className="text-xl font-extrabold text-slate-800 dark:text-white flex items-center gap-2">
+              <Gamepad2 className="w-6 h-6 text-purple-600 animate-bounce" />
+              Góc Trò Chơi Vui Nhộn (Học Mà Chơi - Chơi Mà Học)
+            </h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 font-medium">
+              Thử sức các câu đố vui Toán, Tiếng Việt, Khoa Học & Tiếng Anh để tích lũy Sao ⭐ đổi quà!
+            </p>
+          </div>
           <Link
-            to="/materials"
-            className="text-xs font-bold text-purple-600 hover:text-purple-700 flex items-center gap-1"
+            to="/games"
+            className="inline-flex items-center gap-1.5 text-xs font-extrabold text-purple-600 hover:text-purple-700 dark:text-purple-400 transition"
           >
-            Kho Game Đầy Đủ <ArrowRight className="w-3.5 h-3.5" />
+            <span>Vào Kho Game Đầy Đủ</span>
+            <ArrowRight className="w-4 h-4" />
           </Link>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {FUN_GAMES.map((game) => (
-            <div
-              key={game.id}
-              className={`p-5 rounded-3xl bg-gradient-to-br ${game.color} text-white shadow-lg relative overflow-hidden flex flex-col justify-between group hover:scale-[1.02] transition-all duration-200`}
-            >
-              <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full blur-xl pointer-events-none" />
-              <div>
-                <div className="flex items-center justify-between mb-3">
-                  <span className="text-2xl">{game.icon}</span>
-                  <span className="text-[10px] font-extrabold uppercase px-2.5 py-1 bg-white/20 backdrop-blur-md rounded-lg">
-                    {game.category}
-                  </span>
-                </div>
-                <h4 className="font-extrabold text-base mb-1 leading-snug">{game.title}</h4>
-                <p className="text-xs text-white/80 line-clamp-2 mb-4 font-medium">{game.description}</p>
+        {/* Mini Game Playground Display */}
+        {selectedGame && (
+          <div className="bg-slate-900 text-white rounded-3xl p-6 shadow-2xl relative overflow-hidden border border-purple-500/30">
+            <div className="flex items-center justify-between mb-4 border-b border-slate-800 pb-3">
+              <div className="flex items-center gap-2">
+                <span className="text-2xl">{selectedGame.icon}</span>
+                <h4 className="font-extrabold text-lg text-amber-300">{selectedGame.title}</h4>
               </div>
-
-              <button
-                onClick={() => startMiniGame(game)}
-                className="w-full py-2.5 bg-white text-slate-900 font-extrabold text-xs rounded-xl flex items-center justify-center gap-2 shadow-md hover:bg-slate-100 transition"
-              >
-                <Play className="w-3.5 h-3.5 fill-current" />
-                Chơi Ngay
-              </button>
-            </div>
-          ))}
-        </div>
-
-        {/* ACTIVE MINI-GAME INTERACTIVE CARD WITH SUBJECT MATCHING QUESTIONS */}
-        {activeMiniGame && currentQuestions.length > 0 && (
-          <div className="p-6 bg-slate-900 text-white rounded-3xl border border-purple-500/50 shadow-2xl space-y-4 animate-fade-in relative">
-            <button
-              onClick={() => setActiveMiniGame(null)}
-              className="absolute top-4 right-4 text-xs font-bold px-3 py-1 bg-slate-800 hover:bg-slate-700 rounded-lg text-slate-300"
-            >
-              ✖ Đóng
-            </button>
-
-            <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-800 pb-3">
-              <div className="flex items-center gap-3">
-                <span className="text-3xl">{activeMiniGame.icon}</span>
-                <div>
-                  <h4 className="font-extrabold text-lg text-purple-400">{activeMiniGame.title}</h4>
-                  <p className="text-xs text-slate-400">Bấm chọn đáp án đúng để tích lũy Sao Thưởng!</p>
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-1 bg-amber-500/20 px-3 py-1 rounded-full text-xs font-extrabold text-amber-300">
+                  <Star className="w-4 h-4 fill-amber-300" />
+                  <span>{gameScore} ⭐</span>
                 </div>
-              </div>
-
-              <div className="flex items-center gap-4 font-mono text-sm font-extrabold">
-                <div className="flex items-center gap-1.5 bg-slate-800 px-3 py-1.5 rounded-xl text-amber-400 border border-slate-700">
-                  <Star className="w-4 h-4 fill-amber-400" />
-                  <span>Điểm: {gameScore} ⭐</span>
-                </div>
-
-                <div className="flex items-center gap-1.5 bg-slate-800 px-3 py-1.5 rounded-xl text-brand-400 border border-slate-700">
+                <div className="flex items-center gap-1 bg-red-500/20 px-3 py-1 rounded-full text-xs font-extrabold text-red-300">
                   <Clock className="w-4 h-4" />
-                  <span>Thời gian: {gameTimer}s</span>
+                  <span>{gameTimer}s</span>
                 </div>
+                <button
+                  onClick={() => setSelectedGame(null)}
+                  className="p-1 text-slate-400 hover:text-white rounded-lg transition"
+                >
+                  <X className="w-5 h-5" />
+                </button>
               </div>
             </div>
 
-            {gameActive ? (
-              <div className="space-y-4 max-w-xl mx-auto text-center py-2">
-                <div className="text-xs font-bold uppercase text-purple-300">
-                  Câu hỏi {gameQuestionIndex + 1} / {currentQuestions.length} ({activeMiniGame.category})
+            {gameActive && currentQuestions.length > 0 ? (
+              <div className="space-y-4">
+                <div className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+                  Câu hỏi {gameQuestionIndex + 1} / {currentQuestions.length}
                 </div>
+                <h5 className="text-xl font-bold text-white bg-slate-800/80 p-4 rounded-2xl border border-slate-700">
+                  {currentQuestions[gameQuestionIndex]?.question}
+                </h5>
 
-                <div className="p-5 bg-slate-800/90 rounded-2xl border border-slate-700 text-lg sm:text-xl font-bold leading-relaxed shadow-inner">
-                  {currentQuestions[gameQuestionIndex].question}
-                </div>
-
-                {/* 4 Multi Choice Answer Buttons */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
-                  {currentQuestions[gameQuestionIndex].options.map((opt, idx) => {
-                    const isSelected = selectedOption === opt
-                    const isCorrect = opt === currentQuestions[gameQuestionIndex].answer
-                    let btnColor = 'bg-slate-800 hover:bg-purple-600/80 border-slate-700 text-white'
-
-                    if (selectedOption !== null) {
-                      if (isCorrect) btnColor = 'bg-emerald-600 border-emerald-500 text-white font-black scale-105'
-                      else if (isSelected) btnColor = 'bg-rose-600 border-rose-500 text-white'
-                    }
-
-                    return (
-                      <button
-                        key={idx}
-                        disabled={selectedOption !== null}
-                        onClick={() => handleSelectOption(opt)}
-                        className={`p-3.5 rounded-xl border text-sm font-bold transition flex items-center justify-between shadow-md ${btnColor}`}
-                      >
-                        <span className="text-left">{opt}</span>
-                        {selectedOption !== null && isCorrect && <Check className="w-4 h-4 text-white" />}
-                        {selectedOption !== null && isSelected && !isCorrect && <X className="w-4 h-4 text-white" />}
-                      </button>
-                    )
-                  })}
+                  {currentQuestions[gameQuestionIndex]?.options.map((opt) => (
+                    <button
+                      key={opt}
+                      onClick={() => handleAnswerClick(opt)}
+                      disabled={selectedOption !== null}
+                      className={`p-3.5 rounded-xl font-bold text-sm text-left transition transform active:scale-95 flex items-center justify-between ${
+                        selectedOption === opt
+                          ? opt === currentQuestions[gameQuestionIndex].answer
+                            ? 'bg-emerald-600 text-white'
+                            : 'bg-rose-600 text-white'
+                          : 'bg-slate-800 hover:bg-purple-600 text-slate-100 border border-slate-700'
+                      }`}
+                    >
+                      <span>{opt}</span>
+                      {selectedOption === opt && (
+                        <span>
+                          {opt === currentQuestions[gameQuestionIndex].answer ? (
+                            <Check className="w-4 h-4" />
+                          ) : (
+                            <X className="w-4 h-4" />
+                          )}
+                        </span>
+                      )}
+                    </button>
+                  ))}
                 </div>
 
                 {gameFeedback && (
-                  <div className="p-3 bg-purple-950 text-purple-200 rounded-xl text-sm font-bold animate-bounce mt-2">
+                  <div className="p-3 rounded-xl bg-purple-950/80 text-purple-200 border border-purple-800 text-sm font-bold text-center animate-fade-in">
                     {gameFeedback}
                   </div>
                 )}
               </div>
             ) : (
               <div className="text-center py-6 space-y-4">
-                <Trophy className="w-14 h-14 text-amber-400 mx-auto" />
-                <h4 className="text-2xl font-extrabold text-emerald-400">
-                  {gameFeedback || 'Kết thúc trò chơi!'}
-                </h4>
-                <p className="text-sm text-slate-300">Tổng điểm Sao bạn đạt được: <strong>{gameScore} ⭐</strong></p>
-                <button
-                  onClick={() => startMiniGame(activeMiniGame)}
-                  className="inline-flex items-center gap-2 px-6 py-3 bg-brand-600 hover:bg-brand-700 text-white font-extrabold rounded-xl shadow-lg transition"
-                >
-                  <RotateCcw className="w-4 h-4" /> Chơi Lại Từ Đầu
-                </button>
+                <Trophy className="w-16 h-16 text-amber-400 mx-auto animate-bounce" />
+                <h5 className="text-2xl font-extrabold text-amber-300">
+                  {gameFeedback || 'Đã Hoàn Thành Thử Thách!'}
+                </h5>
+                <p className="text-sm text-slate-300">
+                  Tổng điểm bạn tích lũy được: <strong className="text-amber-400 text-lg">{gameScore} ⭐</strong>
+                </p>
+                <div className="flex justify-center gap-3">
+                  <button
+                    onClick={() => handleStartGame(selectedGame)}
+                    className="px-5 py-2.5 bg-purple-600 hover:bg-purple-700 text-white font-extrabold text-xs rounded-xl shadow-md transition flex items-center gap-1.5"
+                  >
+                    <RotateCcw className="w-4 h-4" />
+                    Chơi Lại Trò Này
+                  </button>
+                  <button
+                    onClick={() => setSelectedGame(null)}
+                    className="px-5 py-2.5 bg-slate-800 hover:bg-slate-700 text-white font-extrabold text-xs rounded-xl transition"
+                  >
+                    Chọn Trò Chơi Khác
+                  </button>
+                </div>
               </div>
             )}
           </div>
         )}
+
+        {/* Game List Cards Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {FUN_GAMES.map((game) => (
+            <div
+              key={game.id}
+              className="bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-200/80 dark:border-slate-800 flex flex-col justify-between hover:shadow-xl hover:border-purple-400 transition group"
+            >
+              <div>
+                <div className="flex items-center justify-between gap-2 mb-3">
+                  <span className="text-[10px] font-extrabold uppercase px-2.5 py-0.5 rounded-md bg-purple-50 text-purple-700 dark:bg-purple-950 dark:text-purple-300">
+                    {game.category}
+                  </span>
+                  <span className="text-xl">{game.icon}</span>
+                </div>
+                <h4 className="font-extrabold text-sm text-slate-800 dark:text-white group-hover:text-purple-600 transition mb-1 leading-snug">
+                  {game.title}
+                </h4>
+                <p className="text-xs text-slate-500 dark:text-slate-400 font-medium line-clamp-2 mb-4">
+                  {game.description}
+                </p>
+              </div>
+
+              <button
+                onClick={() => handleStartGame(game)}
+                className="w-full py-2 bg-purple-600 hover:bg-purple-700 text-white font-extrabold text-xs rounded-xl shadow-md flex items-center justify-center gap-1.5 transition transform active:scale-95"
+              >
+                <Play className="w-3.5 h-3.5 fill-current" />
+                <span>Chơi Ngay (30s)</span>
+              </button>
+            </div>
+          ))}
+        </div>
       </div>
 
-      {/* Main Grid Content */}
+      {/* Recent Classes & Recent Materials Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Recent Classes */}
         <div className="glass-panel p-6 rounded-3xl border border-slate-200/80 dark:border-slate-800 space-y-4">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
             <h3 className="font-extrabold text-lg text-slate-800 dark:text-white flex items-center gap-2">
               <Users className="w-5 h-5 text-brand-600" />
-              Lớp Học Gần Đây
+              Lớp Học Của Bạn
             </h3>
             <Link
               to="/classes"
-              className="text-xs font-bold text-brand-600 hover:text-brand-700 flex items-center gap-1"
+              className="text-xs font-extrabold text-brand-600 hover:text-brand-700 dark:text-brand-400 flex items-center gap-1"
             >
-              Xem Tất Cả <ArrowRight className="w-3.5 h-3.5" />
+              <span>Xem tất cả</span>
+              <ArrowRight className="w-3.5 h-3.5" />
             </Link>
           </div>
 
           {recentClasses.length === 0 ? (
-            <div className="p-8 text-center bg-slate-50 dark:bg-slate-900/50 rounded-2xl">
-              <p className="text-sm text-slate-500 mb-3">Chưa có lớp học nào.</p>
-              {isTeacher && (
-                <button
-                  onClick={() => setShowCreateClass(true)}
-                  className="px-4 py-2 bg-brand-600 text-white rounded-xl text-xs font-bold"
-                >
-                  + Tạo Lớp Đầu Tiên
-                </button>
-              )}
+            <div className="py-8 text-center text-slate-400 text-xs font-semibold">
+              Chưa có lớp học nào. {isTeacher ? 'Hãy bấm "Tạo Lớp Mới".' : 'Hãy bấm "Nhập Mã Vào Lớp".'}
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {recentClasses.map((c) => (
+            <div className="space-y-3">
+              {recentClasses.map((cls) => (
                 <Link
-                  key={c.id}
-                  to={`/classes/${c.id}`}
-                  className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 hover:border-brand-500 hover:shadow-md transition group"
+                  key={cls.id}
+                  to={`/classes/${cls.id}`}
+                  className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/70 dark:border-slate-800 flex items-center justify-between hover:border-brand-400 hover:shadow-md transition group"
                 >
-                  <span className="text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 bg-brand-50 text-brand-700 dark:bg-brand-950 dark:text-brand-300 rounded-md">
-                    {c.subject}
-                  </span>
-                  <h4 className="font-bold text-slate-800 dark:text-white mt-2 group-hover:text-brand-600 transition">
-                    {c.name}
-                  </h4>
-                  <div className="flex items-center justify-between mt-3 text-xs text-slate-500 font-mono">
-                    <span>Mã Lớp: {c.code}</span>
-                    <ArrowRight className="w-4 h-4 text-slate-400 group-hover:translate-x-1 transition" />
+                  <div>
+                    <h4 className="font-extrabold text-sm text-slate-800 dark:text-white group-hover:text-brand-600 transition">
+                      {cls.name}
+                    </h4>
+                    <p className="text-xs text-slate-400 font-medium">Môn: {cls.subject || 'Tổng hợp'}</p>
                   </div>
+                  <span className="font-mono text-xs font-extrabold px-3 py-1 bg-brand-50 text-brand-700 dark:bg-brand-950 dark:text-brand-300 rounded-xl border border-brand-200/50">
+                    Mã: {cls.code}
+                  </span>
                 </Link>
               ))}
             </div>
           )}
         </div>
 
-        {/* Recent Materials & Games */}
+        {/* Recent Materials */}
         <div className="glass-panel p-6 rounded-3xl border border-slate-200/80 dark:border-slate-800 space-y-4">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
             <h3 className="font-extrabold text-lg text-slate-800 dark:text-white flex items-center gap-2">
-              <Gamepad2 className="w-5 h-5 text-purple-600" />
-              Học Liệu & Game Nổi Bật
+              <BookOpen className="w-5 h-5 text-purple-600" />
+              Bài Tập Mới Tải Lên
             </h3>
             <Link
               to="/materials"
-              className="text-xs font-bold text-brand-600 hover:text-brand-700 flex items-center gap-1"
+              className="text-xs font-extrabold text-purple-600 hover:text-purple-700 dark:text-purple-400 flex items-center gap-1"
             >
-              Xem Tất Cả <ArrowRight className="w-3.5 h-3.5" />
+              <span>Vào Kho Bài Tập</span>
+              <ArrowRight className="w-3.5 h-3.5" />
             </Link>
           </div>
 
           {recentMaterials.length === 0 ? (
-            <div className="p-8 text-center bg-slate-50 dark:bg-slate-900/50 rounded-2xl">
-              <p className="text-sm text-slate-500 mb-3">Chưa có học liệu/game nào.</p>
-              {isTeacher && (
-                <button
-                  onClick={() => setShowUploadMaterial(true)}
-                  className="px-4 py-2 bg-purple-600 text-white rounded-xl text-xs font-bold"
-                >
-                  + Tải Lên Học Liệu
-                </button>
-              )}
+            <div className="py-8 text-center text-slate-400 text-xs font-semibold">
+              Chưa có bài tập nào. Hãy tải bài tập đầu tiên lên!
             </div>
           ) : (
             <div className="space-y-3">
-              {recentMaterials.map((m) => (
-                <Link
-                  key={m.id}
-                  to="/materials"
-                  className="p-3.5 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 hover:border-purple-500 hover:shadow-md transition flex items-center justify-between group"
+              {recentMaterials.map((mat) => (
+                <div
+                  key={mat.id}
+                  className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/70 dark:border-slate-800 flex items-center justify-between hover:border-purple-400 transition"
                 >
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-purple-100 dark:bg-purple-950 text-purple-600 flex items-center justify-center text-lg font-bold">
-                      {m.type === 'game_iframe' || m.type === 'game_html5' ? '🎮' : '📄'}
-                    </div>
-                    <div>
-                      <h4 className="font-bold text-slate-800 dark:text-white text-sm group-hover:text-purple-600 transition">
-                        {m.title}
-                      </h4>
-                      <p className="text-xs text-slate-500">{m.subject}</p>
-                    </div>
+                  <div className="min-w-0 flex-1 pr-3">
+                    <h4 className="font-extrabold text-sm text-slate-800 dark:text-white truncate">
+                      {mat.title}
+                    </h4>
+                    <p className="text-xs text-slate-400 font-medium">Môn: {mat.subject || 'Tổng hợp'}</p>
                   </div>
-                  <span className="text-[11px] font-bold px-2.5 py-1 bg-slate-100 dark:bg-slate-700 rounded-lg text-slate-600 dark:text-slate-300 uppercase">
-                    {m.type}
+                  <span className="text-[10px] font-extrabold uppercase px-2.5 py-1 bg-purple-50 text-purple-700 dark:bg-purple-950 dark:text-purple-300 rounded-lg shrink-0">
+                    {mat.type === 'game_iframe' ? '🎮 GAME' : '📄 BÀI TẬP'}
                   </span>
-                </Link>
+                </div>
               ))}
             </div>
           )}
