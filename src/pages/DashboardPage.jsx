@@ -308,7 +308,7 @@ const DashboardPage = () => {
             Xin chào các bạn đến với Lớp Học Vui Nhộn 🎓
           </h2>
           <p className="text-brand-100 text-sm mb-6 leading-relaxed">
-            Hệ thống quản lý lớp học, kho bài tập và góc trò chơi giáo dục tương tác dành cho học sinh Tiểu học.
+            Hệ thống quản lý lớp học, kho học liệu, kho game và bảng điểm dành cho học sinh Tiểu học.
           </p>
 
           <div className="flex flex-wrap gap-3">
@@ -325,7 +325,7 @@ const DashboardPage = () => {
             {role === 'student' && (
               <button
                 onClick={() => setShowJoinClass(true)}
-                className="inline-flex items-center gap-2 px-4 py-2.5 bg-white text-brand-800 hover:bg-brand-50 rounded-xl font-extrabold text-sm shadow-md transition transform active:scale-95"
+                className="inline-flex items-center gap-2 px-4 py-2.5 bg-amber-500 hover:bg-amber-600 text-white rounded-xl font-extrabold text-sm shadow-md transition transform active:scale-95"
               >
                 <KeyRound className="w-4 h-4" />
                 Nhập Mã Vào Lớp
@@ -335,24 +335,24 @@ const DashboardPage = () => {
             {isTeacher && (
               <button
                 onClick={() => setShowUploadMaterial(true)}
-                className="inline-flex items-center gap-2 px-4 py-2.5 bg-brand-700/50 hover:bg-brand-700 text-white rounded-xl font-extrabold text-sm border border-white/20 transition"
+                className="inline-flex items-center gap-2 px-4 py-2.5 bg-white/20 hover:bg-white/30 backdrop-blur-md text-white rounded-xl font-extrabold text-sm border border-white/30 transition"
               >
                 <Upload className="w-4 h-4" />
-                Đăng Bài Tập / Game
+                Tải Lên Học Liệu Mới
               </button>
             )}
           </div>
         </div>
       </div>
 
-      {/* Overview Quick Stats */}
+      {/* Overview Quick Stats - 4 CORE FEATURES */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         <div className="glass-panel p-5 rounded-2xl border border-slate-200/80 dark:border-slate-800 flex items-center gap-4">
           <div className="w-12 h-12 rounded-2xl bg-blue-100 dark:bg-blue-950 text-blue-600 dark:text-blue-400 flex items-center justify-center font-extrabold text-xl">
             <Users className="w-6 h-6" />
           </div>
           <div>
-            <p className="text-xs font-extrabold uppercase tracking-wider text-slate-400">Lớp Học</p>
+            <p className="text-xs font-extrabold uppercase tracking-wider text-slate-400">Quản Lý Lớp Học</p>
             <h3 className="text-2xl font-black text-slate-800 dark:text-white">{stats.classesCount}</h3>
           </div>
         </div>
@@ -362,7 +362,7 @@ const DashboardPage = () => {
             <BookOpen className="w-6 h-6" />
           </div>
           <div>
-            <p className="text-xs font-extrabold uppercase tracking-wider text-slate-400">Kho Bài Tập</p>
+            <p className="text-xs font-extrabold uppercase tracking-wider text-slate-400">Kho Học Liệu</p>
             <h3 className="text-2xl font-black text-slate-800 dark:text-white">{stats.materialsCount}</h3>
           </div>
         </div>
@@ -372,7 +372,7 @@ const DashboardPage = () => {
             <Gamepad2 className="w-6 h-6" />
           </div>
           <div>
-            <p className="text-xs font-extrabold uppercase tracking-wider text-slate-400">Game Giáo Dục</p>
+            <p className="text-xs font-extrabold uppercase tracking-wider text-slate-400">Kho Game</p>
             <h3 className="text-2xl font-black text-slate-800 dark:text-white">4 Trò Chơi</h3>
           </div>
         </div>
@@ -382,7 +382,7 @@ const DashboardPage = () => {
             <Trophy className="w-6 h-6" />
           </div>
           <div>
-            <p className="text-xs font-extrabold uppercase tracking-wider text-slate-400">Điểm Đổi Quà</p>
+            <p className="text-xs font-extrabold uppercase tracking-wider text-slate-400">Bảng Điểm</p>
             <h3 className="text-2xl font-black text-slate-800 dark:text-white">{gameScore} ⭐</h3>
           </div>
         </div>
@@ -404,7 +404,7 @@ const DashboardPage = () => {
             to="/games"
             className="inline-flex items-center gap-1.5 text-xs font-extrabold text-purple-600 hover:text-purple-700 dark:text-purple-400 transition"
           >
-            <span>Vào Kho Game Đầy Đủ</span>
+            <span>Kho Game Đầy Đủ</span>
             <ArrowRight className="w-4 h-4" />
           </Link>
         </div>
@@ -591,20 +591,20 @@ const DashboardPage = () => {
           <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
             <h3 className="font-extrabold text-lg text-slate-800 dark:text-white flex items-center gap-2">
               <BookOpen className="w-5 h-5 text-purple-600" />
-              Bài Tập Mới Tải Lên
+              Kho Học Liệu Mới Tải Lên
             </h3>
             <Link
               to="/materials"
               className="text-xs font-extrabold text-purple-600 hover:text-purple-700 dark:text-purple-400 flex items-center gap-1"
             >
-              <span>Vào Kho Bài Tập</span>
+              <span>Vào Kho Học Liệu</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </Link>
           </div>
 
           {recentMaterials.length === 0 ? (
             <div className="py-8 text-center text-slate-400 text-xs font-semibold">
-              Chưa có bài tập nào. Hãy tải bài tập đầu tiên lên!
+              Chưa có học liệu nào. Hãy tải học liệu đầu tiên lên!
             </div>
           ) : (
             <div className="space-y-3">
@@ -620,7 +620,7 @@ const DashboardPage = () => {
                     <p className="text-xs text-slate-400 font-medium">Môn: {mat.subject || 'Tổng hợp'}</p>
                   </div>
                   <span className="text-[10px] font-extrabold uppercase px-2.5 py-1 bg-purple-50 text-purple-700 dark:bg-purple-950 dark:text-purple-300 rounded-lg shrink-0">
-                    {mat.type === 'game_iframe' ? '🎮 GAME' : '📄 BÀI TẬP'}
+                    {mat.type === 'game_iframe' ? '🎮 GAME' : '📄 HỌC LIỆU'}
                   </span>
                 </div>
               ))}
